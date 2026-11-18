@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>net.rageevent.hypixel</groupId>
+    <artifactId>PrismPit</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>27</maven.compiler.source>
+        <maven.compiler.target>27</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    <repositories>
+        <repository>
+            <id>fern-private</id>
+            <url>https://fern.rageevent.net/maven/private</url>
+        </repository>
+        <repository>
+            <id>fern-releases</id>
+            <url>https://fern.rageevent.net/maven/releases</url>
+        </repository>
+        <repository>
+            <id>fern-api</id>
+            <url>https://fern.rageevent.net/maven/fern</url>
+        </repository>
+        <repository>
+            <id>mojang</id>
+            <url>https://libraries.minecraft.net/</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>dev.prism</groupId>
+            <artifactId>prism-api</artifactId>
+            <version>0.2.0</version>
+        </dependency>
+        <!-- Source: https://mvnrepository.com/artifact/com.mojang/brigadier -->
+        <dependency>
+            <groupId>com.mojang</groupId>
+            <artifactId>brigadier</artifactId>
+            <version>1.0.500</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>dev.datum</groupId>
+            <artifactId>datum-api</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>net.rageevent</groupId>
+            <artifactId>fern-api</artifactId>
+            <version>0.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.42</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>
