@@ -1,4 +1,4 @@
-package net.rageevent.hypixel.player;
+package net.rageevent.hypixel.player.enums;
 
 import dev.prism.api.text.TextColor;
 import lombok.Getter;

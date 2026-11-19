@@ -1,4 +1,4 @@
-package net.rageevent.hypixel.player;
+package net.rageevent.hypixel.player.enums;
 
 import dev.prism.api.text.TextColor;
 import lombok.Getter;
@@ -72,9 +72,7 @@ public enum PlayerPrestige {
     XLVII(5000,TextColor.DARK_AQUA,10000),
     XLVIII(10000,TextColor.DARK_AQUA,10000),
     XLIX(50000,TextColor.DARK_AQUA,10000),
-
     L(100000,TextColor.DARK_GRAY,10000),
-
 
     ;
     private final double multiplier;
