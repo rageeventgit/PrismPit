@@ -13,7 +13,6 @@ public enum AdminSetting {
     BUILD_MODE(Text.of("Build Mode"), Text.of("Break & place anything you want!"), true),
     RAINBOW_CHAT(Text.of("Rainbow Chat"), Text.of("Make your text colorful!"), false);
 
-
     private final Text title;
     private final Text description;
     private final boolean autoToggle;

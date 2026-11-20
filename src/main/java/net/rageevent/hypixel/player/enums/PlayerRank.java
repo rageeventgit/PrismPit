@@ -17,7 +17,8 @@ public enum PlayerRank {
             return Text.of("").color(TextColor.GRAY);
         }
     },
-    ADMIN(TextColor.RED);
+    UPS(TextColor.hex("#FFB500")),
+    ADMIN(TextColor.hex("#fa203d"));
 
     private final TextColor color;
 

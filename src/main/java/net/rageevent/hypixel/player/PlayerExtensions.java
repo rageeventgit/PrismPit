@@ -20,10 +20,10 @@ public class PlayerExtensions {
     }
 
     public static void savePitData(@This Player player, UserData userData) {
-        playerTracker.put(player, userData);
+        playerTracker.put(player.uuid(), userData);
     }
     public static void removePitData(@This Player player){
-        playerTracker.remove(player);
+        playerTracker.remove(player.uuid());
     }
 
     public static PlayerRank rank(@This Player player){

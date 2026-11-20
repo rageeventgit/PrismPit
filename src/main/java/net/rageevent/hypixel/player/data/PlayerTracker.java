@@ -1,13 +1,14 @@
 package net.rageevent.hypixel.player.data;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import dev.prism.api.entity.Player;
-import dev.prism.api.event.player.PlayerChatEvent;
 import lombok.SneakyThrows;
 import net.rageevent.hypixel.player.UserData;
 
@@ -26,13 +27,14 @@ public class PlayerTracker {
 
     private final ConcurrentMap<UUID, UserData> userDataStorage = new ConcurrentHashMap<>();
 
+    private final Object lock = new Object();
 
     public static final ObjectMapper MAPPER = new ObjectMapper()
             .registerModule(new JavaTimeModule())
             .registerModule(new ParameterNamesModule())
             .registerModule(new AfterburnerModule())
+            .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
             .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
-            .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
             .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
             .setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL);
@@ -50,7 +52,7 @@ public class PlayerTracker {
         this.root = (ObjectNode) MAPPER.readTree(playerData.toFile());
     }
 
-    public void flushData() {
+    public void shutdown() {
         io.shutdown();
         try {
             if (!io.awaitTermination(5, TimeUnit.SECONDS)) {
@@ -62,38 +64,33 @@ public class PlayerTracker {
     }
 
     public UserData getOrCreate(Player player) {
-        UserData userData = loadPlayer(player);
-        return userData == null ? userDataStorage.putIfAbsent(player.uuid(), UserData.fresh(player)) : get(player);
+        UserData userData = loadPlayer(player.uuid());
+        return userData == null ? userDataStorage.computeIfAbsent(player.uuid(), _ -> UserData.fresh(player)) : userData;
     }
 
-    public UserData get(Player player) {
-        return userDataStorage.putIfAbsent(player.uuid(), loadPlayer(player));
+    public void put(UUID player, UserData userData) {
+        userDataStorage.put(player, userData);
     }
-
-    public void put(Player player, UserData userData) {
-        userDataStorage.put(player.uuid(), userData);
+    public void remove(UUID player) {
         saveAsync(player);
+        userDataStorage.remove(player);
+    }
+    private void saveAsync(UUID player) {
+        UserData snapshot = userDataStorage.computeIfAbsent(player, this::loadPlayer);
+        io.execute(() -> {
+            synchronized (lock) {
+                root.set(player.toString(), MAPPER.valueToTree(snapshot));
+                try {
+                    MAPPER.writerWithDefaultPrettyPrinter().writeValue(rootPath.toFile(), root);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
     }
 
-    public void remove(Player player) {
-        saveAsync(player);
-        userDataStorage.remove(player.uuid());
-    }
-
-    private void saveAsync(Player player) {
-        UserData snapshot = userDataStorage.putIfAbsent(player.uuid(), loadPlayer(player));
-        System.out.println(snapshot);
-
-        root.set(player.uuid().toString(), MAPPER.valueToTree(snapshot));
-        try {
-            MAPPER.writerWithDefaultPrettyPrinter().writeValue(rootPath.toFile(), root);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private UserData loadPlayer(Player player) {
-        JsonNode userNode = root.get(player.uuid().toString());
+    private UserData loadPlayer(UUID player) {
+        JsonNode userNode = root.get(player.toString());
         if (userNode == null) //Extracted because the mapper will throw.
             return null;
 
