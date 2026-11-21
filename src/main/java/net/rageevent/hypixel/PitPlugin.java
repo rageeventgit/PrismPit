@@ -20,10 +20,9 @@ import java.util.Arrays;
 public final class PitPlugin implements Plugin {
 
     private PlayerTracker playerTracker;
-
     private Datum datum;
-
     private FernClient fernClient;
+
 
     @Override
     public void enable(PluginContext context) {
@@ -33,6 +32,7 @@ public final class PitPlugin implements Plugin {
         datum = Datum.http("https://datum.rageevent.net")
                 .apiKey(System.getenv("DATUM_API_KEY"))
                 .build();
+
 
         fernClient = FernClient.builder()
                 .url("https://fern.rageevent.net")

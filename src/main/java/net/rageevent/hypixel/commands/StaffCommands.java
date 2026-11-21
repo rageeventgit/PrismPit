@@ -2,6 +2,7 @@ package net.rageevent.hypixel.commands;
 
 
 import dev.datum.Datum;
+import dev.prism.api.combat.CombatSettings;
 import dev.prism.api.command.*;
 import dev.prism.api.entity.Player;
 import dev.prism.api.math.Pos;
@@ -12,6 +13,7 @@ import dev.prism.api.world.Instance;
 import dev.prism.api.world.InstanceSpec;
 import dev.prism.api.world.WorldTemplate;
 import net.rageevent.fern.FernClient;
+import net.rageevent.hypixel.game.instance.LobbyRules;
 import net.rageevent.hypixel.player.UserData;
 import net.rageevent.hypixel.player.enums.PlayerRank;
 
@@ -86,7 +88,20 @@ public class StaffCommands {
                             player.setInstance(mapInstance, worldTemplate.spawn()).whenComplete(((_, _) -> {
                                 executor.reply("Successfully made instance");
                             }));
-                            context.scheduler().later(Duration.ofMinutes(2), () -> mapInstance.unload(context.server().instances().defaultInstance()));
+                            mapInstance.rules()
+                                    .mobSpawning(false)
+                                    .combat(CombatSettings.LEGACY_1_8)
+                                    .randomTickSpeed(0)
+                                    .fallDamage(false)
+                                    .fireSpreads(false)
+                                    .fluidsFlow(false)
+                                    .blockDrops(false)
+                                    .pvp(false);
+
+                            context.scheduler().later(Duration.ofMinutes(2), () -> {
+                                mapInstance.unload(context.server().instances().defaultInstance());
+                                executor.reply("<red>Deleting map instance");
+                            });
                         }));
                     }));
                 }).
