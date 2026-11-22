@@ -36,7 +36,7 @@ public class PlayerExtensions {
 
     public static void sendStylizedMessage(@This Player player, String header, TextColor headColor, String markup) {
         Text stylizedSubject = Text.of(header.toUpperCase(), headColor).bold();
-        Text bodyText = Text.of(markup);
+        Text bodyText = Text.parse(markup);
 
         player.sendMessage(Text.join(JoinConfig.spaces(), stylizedSubject, bodyText));
     }

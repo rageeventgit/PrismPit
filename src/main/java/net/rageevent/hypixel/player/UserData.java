@@ -40,6 +40,9 @@ public class UserData {
     private List<AdminSetting> adminSettings;
 
     public int flattenLevel() {
+        if(level < 10)
+            return 1;
+
         return (level * 10) / 10;
     }
 
@@ -54,7 +57,7 @@ public class UserData {
                 PlayerRank.NORMAL,
                 1,
                 PlayerPrestige.P0,
-                PlayerLevel.LEVEL_0.xp(),
+                PlayerLevel.LEVEL_1.xp(),
                 100.0,
                 0,
                 0,

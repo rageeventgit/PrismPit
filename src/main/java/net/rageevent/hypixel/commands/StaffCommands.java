@@ -120,10 +120,9 @@ public class StaffCommands {
             }
             GameInstance gameInstance = new GameInstance(datum,fernClient,context,playerTracker);
             gameInstance.chooseMap();
-            gameInstance.grabMapData().whenComplete((_,_) -> {
-                executor.reply("<yellow>Loading map.");
-                gameInstance.loadMap();
-            });
+            gameInstance.grabMapData();
+            gameInstance.loadMap();
+            context.scheduler().later(Duration.ofSeconds(10), () -> gameInstance.transport(player));
 
             context.scheduler().later(Duration.ofMinutes(3),() -> {
                gameInstance.unloadMap();

@@ -4,7 +4,10 @@ package net.rageevent.hypixel.game;
 import dev.datum.Datum;
 import dev.datum.GameMap;
 import dev.datum.MapInfo;
+import dev.datum.Marker;
 import dev.prism.api.combat.CombatSettings;
+import dev.prism.api.entity.Player;
+import dev.prism.api.math.Pos;
 import dev.prism.api.plugin.PluginContext;
 import dev.prism.api.world.Instance;
 import dev.prism.api.world.InstanceSpec;
@@ -40,6 +43,11 @@ public class GameInstance {
             throw new RuntimeException("The current map must be removed.");
 
         List<MapInfo> playableMaps = datum.maps("the-pit").stream().filter(MapInfo::playable).toList();
+        if (playableMaps.size() == 1) {
+            this.chosenMap = playableMaps.getFirst();
+            return;
+        }
+
         int mapIndex = ThreadLocalRandom.current().nextInt(0, playableMaps.size() - 1);
         this.chosenMap = playableMaps.get(mapIndex);
     }
@@ -91,17 +99,16 @@ public class GameInstance {
         mapData = null;
     }
 
-    public CompletableFuture<Void> grabMapData() {
+    public void transport(Player player){
+        Marker playerSpawn = mapData.requireMarker("player_spawn");
+        player.setInstance(mapInstance, Pos.of(playerSpawn.x(),playerSpawn.y(), playerSpawn.z(),playerSpawn.yaw(),playerSpawn.pitch()));
+    }
+
+    public void grabMapData() {
         if (chosenMap == null)
             throw new RuntimeException("A playable pit map must be chosen");
 
-        return datum.mapAsync(chosenMap.name()).whenComplete(((gameMap, throwable) -> {
-            if (throwable != null) {
-                context.server().console().sendMessage("<red>${throwable.getLocalizedMessage()}");
-                return;
-            }
-            this.mapData = gameMap;
-        })).thenApplyAsync((_) -> null);
+        mapData = datum.map(chosenMap.name().toLowerCase().replace(" ","-"));
     }
 
 }

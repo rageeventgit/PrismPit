@@ -10,7 +10,7 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 public enum PlayerLevel {
 
-    LEVEL_0(0,9,15,TextColor.GRAY),
+    LEVEL_1(1,9,15,TextColor.GRAY),
     LEVEL_10(10,19,30,TextColor.BLUE),
     LEVEL_20(20,29,50,TextColor.DARK_AQUA),
     LEVEL_30(30,39,75,TextColor.DARK_GREEN),

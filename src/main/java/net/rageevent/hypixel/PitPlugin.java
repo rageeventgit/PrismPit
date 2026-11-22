@@ -31,6 +31,7 @@ public final class PitPlugin implements Plugin {
 
         datum = Datum.http("https://datum.rageevent.net")
                 .apiKey(System.getenv("DATUM_API_KEY"))
+                .cacheDir(context.dataFolder().resolve("map-configs"))
                 .build();
 
         fernClient = FernClient.builder()

@@ -79,7 +79,10 @@ public class GameRules {
 
 
         instance.scheduler().every(4, task -> {
-            if (!instance.isLoaded()) task.cancel(); //Make sure it's shutdown.
+            if (mapData == null || !instance.isLoaded()) {
+                task.cancel(); //Make sure it's shutdown.
+                return;
+            }
             List<Region> regions = mapData.regions();
             for (Player player : instance.players()) {
                 Pos playerPosition = player.position();
@@ -92,7 +95,7 @@ public class GameRules {
                     if (isInRegion && !regionStore.isUserStoredInRegion(playerId, region)) {
                         instance.events().post(new PlayerRegionEvent(player, PlayerRegionEvent.Status.ENTERED, region.id()));
                         regionStore.addToRegion(playerId, region);
-                    } else {
+                    } else if (!isInRegion && regionStore.isUserStoredInRegion(playerId, region)) {
                         instance.events().post(new PlayerRegionEvent(player, PlayerRegionEvent.Status.LEFT, region.id()));
                         regionStore.removeFromRegion(playerId);
                     }
@@ -104,6 +107,7 @@ public class GameRules {
 
     public void stop() {
         subscriptions.forEach(Subscription::unsubscribe);
+        regionStore.clear();
     }
 
     private class UserRegionStore {

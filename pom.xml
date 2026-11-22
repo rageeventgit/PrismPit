@@ -152,5 +152,11 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Source: https://mvnrepository.com/artifact/org.mongodb/mongodb-driver-sync -->
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver-sync</artifactId>
+            <version>5.15.0</version>
+        </dependency>
     </dependencies>
 </project>
