@@ -3,6 +3,9 @@ package net.rageevent.hypixel.player;
 import dev.lotus.Extension;
 import dev.lotus.This;
 import dev.prism.api.entity.Player;
+import dev.prism.api.text.JoinConfig;
+import dev.prism.api.text.Text;
+import dev.prism.api.text.TextColor;
 import net.rageevent.hypixel.player.data.PlayerTracker;
 import net.rageevent.hypixel.player.enums.PlayerRank;
 
@@ -22,11 +25,19 @@ public class PlayerExtensions {
     public static void savePitData(@This Player player, UserData userData) {
         playerTracker.put(player.uuid(), userData);
     }
-    public static void removePitData(@This Player player){
+
+    public static void removePitData(@This Player player) {
         playerTracker.remove(player.uuid());
     }
 
-    public static PlayerRank rank(@This Player player){
+    public static PlayerRank rank(@This Player player) {
         return pitData(player).rank();
+    }
+
+    public static void sendStylizedMessage(@This Player player, String header, TextColor headColor, String markup) {
+        Text stylizedSubject = Text.of(header.toUpperCase(), headColor).bold();
+        Text bodyText = Text.of(markup);
+
+        player.sendMessage(Text.join(JoinConfig.spaces(), stylizedSubject, bodyText));
     }
 }

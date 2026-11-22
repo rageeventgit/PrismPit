@@ -22,7 +22,7 @@ public enum PlayerLevel {
     LEVEL_90(90,99,1000,TextColor.DARK_PURPLE),
     LEVEL_100(100,109,1200,TextColor.LIGHT_PURPLE),
     LEVEL_110(110,119,1500,TextColor.WHITE),
-    LEVEL_MAX(120,120,-1,TextColor.AQUA),
+    LEVEL_120(120,120,-1,TextColor.AQUA),
     ;
     private final int min, max, xp;
     private final TextColor color;

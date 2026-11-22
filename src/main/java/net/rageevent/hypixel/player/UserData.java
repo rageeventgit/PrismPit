@@ -43,6 +43,10 @@ public class UserData {
         return (level * 10) / 10;
     }
 
+    public PlayerLevel levelInfo(){
+        return PlayerLevel.valueOf("LEVEL_" + flattenLevel());
+    }
+
     public static UserData fresh(Player player) {
         return new UserData(
                 player.uuid(),

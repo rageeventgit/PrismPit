@@ -33,7 +33,6 @@ public final class PitPlugin implements Plugin {
                 .apiKey(System.getenv("DATUM_API_KEY"))
                 .build();
 
-
         fernClient = FernClient.builder()
                 .url("https://fern.rageevent.net")
                 .apiKey(System.getenv("PANEL_API_KEY"))

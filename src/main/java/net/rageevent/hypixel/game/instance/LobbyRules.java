@@ -17,7 +17,7 @@ import java.util.List;
 
 public class LobbyRules {
 
-    private List<Subscription> subscriptions = new ArrayList<>();
+    private final List<Subscription> subscriptions = new ArrayList<>();
 
     public LobbyRules(Instance instance, PlayerTracker playerTracker) {
         subscriptions.add(instance.events().on(PlayerConfigureEvent.class, event -> {

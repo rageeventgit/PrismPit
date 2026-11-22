@@ -68,7 +68,7 @@ public class StaffCommands {
                     }
 
                     executor.reply("Downloading map.");
-                    fernClient.downloadMap(executor.get(mapName), context.dataFolder().resolve("maps/")).whenComplete(((path, throwable) -> {
+                    fernClient.downloadMap(executor.get(mapName), context.dataFolder().resolve("customMap")).whenComplete(((path, throwable) -> {
                         if (throwable != null) {
                             executor.fail(throwable.getLocalizedMessage());
                             return;
