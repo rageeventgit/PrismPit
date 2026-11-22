@@ -15,6 +15,7 @@ import net.rageevent.hypixel.game.instance.GameRules;
 import net.rageevent.hypixel.player.data.PlayerTracker;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 
 @RequiredArgsConstructor
@@ -90,17 +91,17 @@ public class GameInstance {
         mapData = null;
     }
 
-    public void grabMapData() {
+    public CompletableFuture<Void> grabMapData() {
         if (chosenMap == null)
             throw new RuntimeException("A playable pit map must be chosen");
 
-        datum.mapAsync(chosenMap.name()).whenComplete(((gameMap, throwable) -> {
+        return datum.mapAsync(chosenMap.name()).whenComplete(((gameMap, throwable) -> {
             if (throwable != null) {
                 context.server().console().sendMessage("<red>${throwable.getLocalizedMessage()}");
                 return;
             }
             this.mapData = gameMap;
-        }));
+        })).thenApplyAsync((_) -> null);
     }
 
 }

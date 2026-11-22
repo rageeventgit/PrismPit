@@ -13,15 +13,17 @@ import dev.prism.api.world.Instance;
 import dev.prism.api.world.InstanceSpec;
 import dev.prism.api.world.WorldTemplate;
 import net.rageevent.fern.FernClient;
+import net.rageevent.hypixel.game.GameInstance;
 import net.rageevent.hypixel.game.instance.LobbyRules;
 import net.rageevent.hypixel.player.UserData;
+import net.rageevent.hypixel.player.data.PlayerTracker;
 import net.rageevent.hypixel.player.enums.PlayerRank;
 
 import java.time.Duration;
 
 public class StaffCommands {
 
-    public StaffCommands(PluginContext context, FernClient fernClient, Datum datum) {
+    public StaffCommands(PluginContext context, FernClient fernClient, Datum datum, PlayerTracker playerTracker) {
         Argument<String> rankName = Args.string("rankName");
         Argument<Player> target = Args.player("target");
         context.commands().register(Command.create("rank").argument(target).argument(rankName).executes(executor -> {
@@ -106,5 +108,27 @@ public class StaffCommands {
                     }));
                 }).
                 build());
+
+        context.commands().register(Command.create("gameinstance").executes(executor -> {
+            if (!executor.isPlayer()) {
+                throw executor.fail("You must be a player to use this");
+            }
+
+            Player player = executor.player();
+            if (player.rank() != PlayerRank.ADMIN) {
+                throw executor.fail("You must be admin to perform this command.");
+            }
+            GameInstance gameInstance = new GameInstance(datum,fernClient,context,playerTracker);
+            gameInstance.chooseMap();
+            gameInstance.grabMapData().whenComplete((_,_) -> {
+                executor.reply("<yellow>Loading map.");
+                gameInstance.loadMap();
+            });
+
+            context.scheduler().later(Duration.ofMinutes(3),() -> {
+               gameInstance.unloadMap();
+               executor.reply("<red>Unloading instance");
+            });
+        }));
     }
 }

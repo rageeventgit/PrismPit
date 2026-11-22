@@ -66,7 +66,7 @@ public final class PitPlugin implements Plugin {
             event.player().removePitData();
         });
 
-        new StaffCommands(context,fernClient, datum);
+        new StaffCommands(context, fernClient, datum, playerTracker);
     }
 
     @Override
