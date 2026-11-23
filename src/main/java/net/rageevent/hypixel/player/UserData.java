@@ -1,6 +1,7 @@
 package net.rageevent.hypixel.player;
 
 import dev.prism.api.entity.Player;
+import dev.prism.api.text.Text;
 import lombok.*;
 import lombok.experimental.Accessors;
 import net.rageevent.hypixel.game.RenownPerk;
@@ -45,8 +46,15 @@ public class UserData {
         return (level / 10) * 10;
     }
 
+    public Text levelText() {
+        Text levelText = Text.of(Integer.toString(level),levelInfo().color());
+        if (level >= 60)
+            levelText = levelText.bold();
+
+        return levelText;
+    }
+
     public PlayerLevel levelInfo() {
-        System.out.println("Flattened Level: " + flattenLevel());
         return PlayerLevel.valueOf("LEVEL_" + flattenLevel());
     }
 

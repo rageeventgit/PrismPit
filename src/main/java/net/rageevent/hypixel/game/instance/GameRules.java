@@ -7,13 +7,15 @@ import dev.prism.api.entity.Player;
 import dev.prism.api.event.Subscription;
 import dev.prism.api.event.entity.EntityDamageEvent;
 import dev.prism.api.event.player.PlayerChatEvent;
+import dev.prism.api.event.player.PlayerInstanceChangeEvent;
 import dev.prism.api.math.Pos;
-import dev.prism.api.math.Vec;
 import dev.prism.api.plugin.PluginContext;
-import dev.prism.api.scheduler.Task;
+import dev.prism.api.scoreboard.*;
 import dev.prism.api.text.Text;
 import dev.prism.api.text.TextColor;
 import dev.prism.api.world.Instance;
+import net.rageevent.hypixel.game.ui.GameBoard;
+import net.rageevent.hypixel.game.GameSettings;
 import net.rageevent.hypixel.game.events.PlayerRegionEvent;
 import net.rageevent.hypixel.player.UserData;
 import net.rageevent.hypixel.player.data.PlayerTracker;
@@ -31,26 +33,31 @@ public class GameRules {
     private final List<Subscription> subscriptions = new ArrayList<>();
     private final UserRegionStore regionStore = new UserRegionStore();
 
-    public GameRules(GameMap mapData, Instance instance, PlayerTracker playerTracker) {
+    public GameRules(GameMap mapData, PluginContext context, Instance instance, PlayerTracker playerTracker) {
+        GameBoard gameBoard = new GameBoard(playerTracker);
+
+        Teams teams = context.server().scoreboards().createTeams();
+        teams.refresh(GameSettings.NAMETAG_UPDATE_RATE);
+
         subscriptions.add(instance.events().on(PlayerChatEvent.class, event -> event.setFormat((player, message) -> {
             UserData userData = playerTracker.getOrCreate(player);
             PlayerRank playerRank = userData.rank();
 
             PlayerPrestige playerPrestige = userData.prestige();
-            int level = userData.level();
+
+            Text innerText;
+            if (playerPrestige != PlayerPrestige.P0) {
+                innerText = Text.of(playerPrestige.name(), TextColor.YELLOW)
+                        .append(Text.of("-", playerPrestige.bracketColor()))
+                        .append(userData.levelText());
+            } else {
+                innerText = userData.levelText();
+            }
 
             Text levelText = Text.of("[", playerPrestige.bracketColor())
-                    .append(Text.of(String.valueOf(level), userData.levelInfo().color()))
+                    .append(innerText)
                     .append(Text.of("]", playerPrestige.bracketColor()));
 
-            //Could probably store this somehow, I'm too lazy though.
-            if (playerPrestige != PlayerPrestige.P0) {
-                levelText = Text.of("[", playerPrestige.bracketColor())
-                        .append(Text.of(playerPrestige.name(), TextColor.YELLOW))
-                        .append(Text.of("-", playerPrestige.bracketColor()))
-                        .append(Text.of(String.valueOf(level), userData.levelInfo().color()))
-                        .append(Text.of("]", playerPrestige.bracketColor()));
-            }
             levelText = levelText.appendSpace();
 
             Text messageText = Text.join(Text.of(": "), playerRank == PlayerRank.ADMIN ? Text.parse(message) : Text.of(message)).color(TextColor.WHITE);
@@ -62,13 +69,12 @@ public class GameRules {
         subscriptions.add(instance.events().on(EntityDamageEvent.class, event -> {
             Entity entity = event.entity();
             Pos entityPosition = entity.position();
-            if (mapData.isIn("spawn_region", entityPosition.x(), entityPosition.y(), entityPosition.z())){
+            if (mapData.isIn("spawn_region", entityPosition.x(), entityPosition.y(), entityPosition.z())) {
                 event.setCancelled(true);
                 return;
             }
             //TODO: Combat, will have a system that makes it incredibly easy to make enchants and all of that stuff.
         }));
-
         subscriptions.add(instance.events().on(PlayerRegionEvent.class, event -> {
             Player player = event.player();
             PlayerRegionEvent.Status status = event.status();
@@ -79,8 +85,31 @@ public class GameRules {
             else
                 player.sendStylizedMessage("REGIONS", TextColor.DARK_AQUA, "<red>You left <gold>${regionName}</gold>!");
         }));
+        subscriptions.add(instance.events().on(PlayerInstanceChangeEvent.class, event -> {
+            Player player = event.player();
+            if (event.from() != null && event.from().name().equalsIgnoreCase(instance.name())) {
+                player.showBoard(null);
+                teams.remove(player.uuid().toString());
+                return;
+            }
 
-        instance.scheduler().every(4, task -> {
+            if (!event.to().name().equalsIgnoreCase(instance.name())) return;
+            UserData userData = player.pitData();
+
+            Team team = teams.create(player.uuid().toString());
+            TextColor bracketColor = userData.prestige().bracketColor();
+            team.display(TeamDisplay.of(userData.rank().color())
+                    .prefix(Text.of("[", bracketColor)
+                            .append(userData.levelText())
+                            .append(Text.of("]", bracketColor))
+                            .appendSpace())
+                    .suffix(userData.bounty() > 0 ? Text.of(userData.bounty() + "g", TextColor.GOLD).bold() : Text.EMPTY)
+            );
+            team.add(player);
+            instance.players().forEach(teams::show);
+            gameBoard.show(player);
+        }));
+        instance.scheduler().every(GameSettings.REGION_CHECK_RATE, task -> {
             if (mapData == null || !instance.isLoaded()) {
                 task.cancel(); //Make sure it's shutdown.
                 return;

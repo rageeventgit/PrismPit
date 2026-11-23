@@ -1,4 +1,4 @@
-package net.rageevent.hypixel.game;
+package net.rageevent.hypixel.game.instance;
 
 
 import dev.datum.Datum;
@@ -14,7 +14,6 @@ import dev.prism.api.world.InstanceSpec;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.rageevent.fern.FernClient;
-import net.rageevent.hypixel.game.instance.GameRules;
 import net.rageevent.hypixel.player.data.PlayerTracker;
 
 import java.util.List;
@@ -76,7 +75,7 @@ public class GameInstance {
                         .fluidsFlow(false)
                         .blockDrops(false)
                         .pvp(true);
-                this.gameRules = new GameRules(mapData, mapInstance, playerTracker);
+                this.gameRules = new GameRules(mapData,context, mapInstance, playerTracker);
                 mapInitialized = true;
             }));
         }));

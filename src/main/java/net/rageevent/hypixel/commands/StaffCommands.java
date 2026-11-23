@@ -1,7 +1,6 @@
 package net.rageevent.hypixel.commands;
 
 
-import dev.datum.Datum;
 import dev.prism.api.combat.CombatSettings;
 import dev.prism.api.command.*;
 import dev.prism.api.entity.Player;
@@ -11,9 +10,7 @@ import dev.prism.api.text.TextColor;
 import dev.prism.api.world.Instance;
 import dev.prism.api.world.InstanceSpec;
 import net.rageevent.fern.FernClient;
-import net.rageevent.hypixel.game.GameInstance;
 import net.rageevent.hypixel.player.UserData;
-import net.rageevent.hypixel.player.data.PlayerTracker;
 import net.rageevent.hypixel.player.enums.PlayerLevel;
 import net.rageevent.hypixel.player.enums.PlayerPrestige;
 import net.rageevent.hypixel.player.enums.PlayerRank;
@@ -23,12 +20,13 @@ import java.time.Duration;
 
 public class StaffCommands {
 
-    public StaffCommands(PluginContext context, FernClient fernClient, Datum datum, PlayerTracker playerTracker) {
+    public StaffCommands(PluginContext context, FernClient fernClient) {
         CommandManager commands = context.commands();
         commands.register(rankCommand());
         commands.register(levelCommand());
         commands.register(prestigeCommand());
         Argument<String> mapName = Args.greedy("mapName");
+        Instance defaultInstance = context.server().instances().defaultInstance();
         commands.register(Command.create("loadmap").argument(mapName).executes(executor -> {
                     if (!executor.isPlayer()) {
                         throw executor.fail("You must be a player to use this");
@@ -71,35 +69,13 @@ public class StaffCommands {
                                     .pvp(false);
 
                             context.scheduler().later(Duration.ofMinutes(2), () -> {
-                                mapInstance.unload(context.server().instances().defaultInstance());
+                                mapInstance.unload(defaultInstance);
                                 executor.reply("<red>Deleting map instance");
                             });
                         }));
                     }));
                 }).
                 build());
-
-
-        commands.register(Command.create("gameinstance").executes(executor -> {
-            if (!executor.isPlayer()) {
-                throw executor.fail("You must be a player to use this");
-            }
-
-            Player player = executor.player();
-            if (player.rank() != PlayerRank.ADMIN) {
-                throw executor.fail("You must be admin to perform this command.");
-            }
-            GameInstance gameInstance = new GameInstance(datum, fernClient, context, playerTracker);
-            gameInstance.chooseMap();
-            gameInstance.grabMapData();
-            gameInstance.loadMap();
-            context.scheduler().later(Duration.ofSeconds(10), () -> gameInstance.transport(player));
-
-            context.scheduler().later(Duration.ofMinutes(3), () -> {
-                gameInstance.unloadMap();
-                executor.reply("<red>Unloading instance");
-            });
-        }));
     }
 
     private Command levelCommand() {

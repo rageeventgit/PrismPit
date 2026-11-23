@@ -1,5 +1,6 @@
 package net.rageevent.hypixel.game.instance;
 
+import dev.prism.api.combat.CombatSettings;
 import dev.prism.api.entity.GameMode;
 import dev.prism.api.entity.Player;
 import dev.prism.api.event.Subscription;
@@ -20,6 +21,15 @@ public class LobbyRules {
     private final List<Subscription> subscriptions = new ArrayList<>();
 
     public LobbyRules(Instance instance, PlayerTracker playerTracker) {
+        instance.rules()
+                .mobSpawning(false)
+                .combat(CombatSettings.LEGACY_1_8)
+                .fallDamage(false)
+                .fireSpreads(false)
+                .fluidsFlow(false)
+                .blockDrops(false)
+                .pvp(false);
+
         subscriptions.add(instance.events().on(PlayerConfigureEvent.class, event -> {
             Player player = event.player();
             player.setGameMode(GameMode.SURVIVAL);
