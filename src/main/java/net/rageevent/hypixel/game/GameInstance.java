@@ -18,7 +18,6 @@ import net.rageevent.hypixel.game.instance.GameRules;
 import net.rageevent.hypixel.player.data.PlayerTracker;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 
 @RequiredArgsConstructor
@@ -55,7 +54,7 @@ public class GameInstance {
     public void loadMap() {
         if (chosenMap == null)
             throw new RuntimeException("A playable pit map must be chosen");
-        client.downloadMap(chosenMap.name(), context.dataFolder().resolve("Pit Map")).whenComplete(((path, throwable) -> {
+        client.downloadMap(chosenMap.name(), context.dataFolder().resolve(chosenMap.id())).whenComplete(((path, throwable) -> {
             if (throwable != null) {
                 context.server().console().sendMessage("<red>${throwable.getLocalizedMessage()}");
                 return;
@@ -99,16 +98,16 @@ public class GameInstance {
         mapData = null;
     }
 
-    public void transport(Player player){
+    public void transport(Player player) {
         Marker playerSpawn = mapData.requireMarker("player_spawn");
-        player.setInstance(mapInstance, Pos.of(playerSpawn.x(),playerSpawn.y(), playerSpawn.z(),playerSpawn.yaw(),playerSpawn.pitch()));
+        player.setInstance(mapInstance, Pos.of(playerSpawn.x(), playerSpawn.y(), playerSpawn.z(), playerSpawn.yaw(), playerSpawn.pitch()));
     }
 
     public void grabMapData() {
         if (chosenMap == null)
             throw new RuntimeException("A playable pit map must be chosen");
 
-        mapData = datum.map(chosenMap.name().toLowerCase().replace(" ","-"));
+        mapData = datum.map(chosenMap.name().toLowerCase().replace(" ", "-"));
     }
 
 }

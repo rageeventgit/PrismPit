@@ -64,17 +64,23 @@ public class PlayerTracker {
     }
 
     public UserData getOrCreate(Player player) {
-        UserData userData = loadPlayer(player.uuid());
+        UserData userData = userDataStorage.get(player.uuid());
+        if (userData == null) //This will be null if it returns either way, then we have backup.
+            userData = loadPlayer(player.uuid());
+
         return userData == null ? userDataStorage.computeIfAbsent(player.uuid(), _ -> UserData.fresh(player)) : userData;
     }
 
     public void put(UUID player, UserData userData) {
         userDataStorage.put(player, userData);
+       // saveAsync(player);
     }
+
     public void remove(UUID player) {
         saveAsync(player);
         userDataStorage.remove(player);
     }
+
     private void saveAsync(UUID player) {
         UserData snapshot = userDataStorage.computeIfAbsent(player, this::loadPlayer);
         io.execute(() -> {

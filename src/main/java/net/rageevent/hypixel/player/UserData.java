@@ -17,7 +17,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor(force = true)
 @Data
-@Builder
 @Accessors(fluent = true)
 public class UserData {
 
@@ -40,13 +39,14 @@ public class UserData {
     private List<AdminSetting> adminSettings;
 
     public int flattenLevel() {
-        if(level < 10)
+        if (level < 10)
             return 1;
 
-        return (level * 10) / 10;
+        return (level / 10) * 10;
     }
 
-    public PlayerLevel levelInfo(){
+    public PlayerLevel levelInfo() {
+        System.out.println("Flattened Level: " + flattenLevel());
         return PlayerLevel.valueOf("LEVEL_" + flattenLevel());
     }
 

@@ -5,61 +5,31 @@ import dev.datum.Datum;
 import dev.prism.api.combat.CombatSettings;
 import dev.prism.api.command.*;
 import dev.prism.api.entity.Player;
-import dev.prism.api.math.Pos;
 import dev.prism.api.plugin.PluginContext;
 import dev.prism.api.text.Text;
 import dev.prism.api.text.TextColor;
 import dev.prism.api.world.Instance;
 import dev.prism.api.world.InstanceSpec;
-import dev.prism.api.world.WorldTemplate;
 import net.rageevent.fern.FernClient;
 import net.rageevent.hypixel.game.GameInstance;
-import net.rageevent.hypixel.game.instance.LobbyRules;
 import net.rageevent.hypixel.player.UserData;
 import net.rageevent.hypixel.player.data.PlayerTracker;
+import net.rageevent.hypixel.player.enums.PlayerLevel;
+import net.rageevent.hypixel.player.enums.PlayerPrestige;
 import net.rageevent.hypixel.player.enums.PlayerRank;
+import net.rageevent.hypixel.util.RomanNumber;
 
 import java.time.Duration;
 
 public class StaffCommands {
 
     public StaffCommands(PluginContext context, FernClient fernClient, Datum datum, PlayerTracker playerTracker) {
-        Argument<String> rankName = Args.string("rankName");
-        Argument<Player> target = Args.player("target");
-        context.commands().register(Command.create("rank").argument(target).argument(rankName).executes(executor -> {
-                    CommandSender sender = executor.sender();
-
-                    if (executor.isPlayer()) {
-                        Player player = (Player) sender;
-                        if (player.rank() != PlayerRank.ADMIN) {
-                            throw executor.fail("You must be admin to perform this command.");
-                        }
-                    }
-                    String rankIdString = executor.get(rankName);
-                    Player player = executor.get(target);
-                    if (player == null) {
-                        throw executor.fail("Couldn't find that user.");
-                    }
-                    try {
-                        PlayerRank playerRank = PlayerRank.valueOf(rankIdString.toUpperCase());
-
-                        UserData userData = player.pitData();
-                        userData.rank(playerRank);
-
-                        player.savePitData(userData);
-                        player.sendMessage(Text.of("You are now ").color(TextColor.GREEN)
-                                .append(Text.of(playerRank.name(), playerRank.color()))
-                                .append(Text.of(".", TextColor.GREEN)));
-
-                        executor.reply("<green>Success!");
-                    } catch (IllegalArgumentException e) {
-                        throw executor.fail(e.getMessage());
-                    }
-                }).
-                build());
-
+        CommandManager commands = context.commands();
+        commands.register(rankCommand());
+        commands.register(levelCommand());
+        commands.register(prestigeCommand());
         Argument<String> mapName = Args.greedy("mapName");
-        context.commands().register(Command.create("loadmap").argument(mapName).executes(executor -> {
+        commands.register(Command.create("loadmap").argument(mapName).executes(executor -> {
                     if (!executor.isPlayer()) {
                         throw executor.fail("You must be a player to use this");
                     }
@@ -109,7 +79,8 @@ public class StaffCommands {
                 }).
                 build());
 
-        context.commands().register(Command.create("gameinstance").executes(executor -> {
+
+        commands.register(Command.create("gameinstance").executes(executor -> {
             if (!executor.isPlayer()) {
                 throw executor.fail("You must be a player to use this");
             }
@@ -118,16 +89,124 @@ public class StaffCommands {
             if (player.rank() != PlayerRank.ADMIN) {
                 throw executor.fail("You must be admin to perform this command.");
             }
-            GameInstance gameInstance = new GameInstance(datum,fernClient,context,playerTracker);
+            GameInstance gameInstance = new GameInstance(datum, fernClient, context, playerTracker);
             gameInstance.chooseMap();
             gameInstance.grabMapData();
             gameInstance.loadMap();
             context.scheduler().later(Duration.ofSeconds(10), () -> gameInstance.transport(player));
 
-            context.scheduler().later(Duration.ofMinutes(3),() -> {
-               gameInstance.unloadMap();
-               executor.reply("<red>Unloading instance");
+            context.scheduler().later(Duration.ofMinutes(3), () -> {
+                gameInstance.unloadMap();
+                executor.reply("<red>Unloading instance");
             });
         }));
+    }
+
+    private Command levelCommand() {
+        Argument<Player> target = Args.player("target").optional();
+        Argument<Integer> level = Args.integer("level", 1, 120);
+
+        return Command.create("level", "lvl")
+                .argument(level)
+                .argument(target)
+                .executes(executor -> {
+                    if (executor.isPlayer() && executor.player().rank() != PlayerRank.ADMIN)
+                        executor.fail("You must be admin or higher to use this");
+
+                    int upgradedLevel = executor.get(level);
+                    Player targetPlayer = executor.get(target);
+
+                    if (targetPlayer == null && executor.isPlayer())
+                        targetPlayer = executor.player();
+                    else if (targetPlayer == null && !executor.isPlayer()) {
+                        throw executor.fail("You must supply a player");
+                    }
+
+                    UserData userData = targetPlayer.pitData();
+
+                    targetPlayer.savePitData(userData.level(upgradedLevel).experience(0));
+
+                    PlayerLevel playerLevel = userData.levelInfo();
+                    targetPlayer.sendStylizedMessage("UPGRADE", TextColor.GOLD,
+                            Text.parse("Your <yellow>level</yellow> has been set to ")
+                                    .append(Text.of(upgradedLevel + "", playerLevel.color()))
+                                    .append(Text.of(".", TextColor.WHITE))
+                    );
+                    executor.reply("<green>Success");
+                })
+                .build();
+    }
+
+    private Command prestigeCommand() {
+        Argument<Player> target = Args.player("target").optional();
+        Argument<Integer> prestige = Args.integer("prestige", 0, 50);
+
+
+        return Command.create("prestige", "pres")
+                .argument(prestige)
+                .argument(target)
+                .executes(executor -> {
+                    if (executor.isPlayer() && executor.player().rank() != PlayerRank.ADMIN)
+                        executor.fail("You must be admin or higher to use this");
+
+                    int upgradedPrestige = executor.get(prestige);
+                    Player targetPlayer = executor.get(target);
+
+                    if (targetPlayer == null && executor.isPlayer())
+                        targetPlayer = executor.player();
+                    else if (targetPlayer == null && !executor.isPlayer()) {
+                        throw executor.fail("You must supply a player");
+                    }
+
+                    UserData userData = targetPlayer.pitData();
+                    PlayerPrestige playerPrestige = upgradedPrestige == 0 ? PlayerPrestige.P0 : PlayerPrestige.valueOf(RomanNumber.toRoman(upgradedPrestige));
+
+                    userData = userData.prestige(playerPrestige);
+
+                    targetPlayer.savePitData(userData);
+                    targetPlayer.sendStylizedMessage("UPGRADE", TextColor.GOLD,
+                            Text.parse("Your <aqua>prestige</aqua> has been set to ")
+                                    .append(Text.of(playerPrestige.name(), playerPrestige.bracketColor()))
+                                    .append(Text.of(".", TextColor.WHITE))
+                    );
+                    executor.reply("<green>Success");
+                })
+                .build();
+    }
+
+    private Command rankCommand() {
+        Argument<String> rankName = Args.string("rankName");
+        Argument<Player> target = Args.player("target");
+
+        return Command.create("rank").argument(target).argument(rankName).executes(executor -> {
+                    CommandSender sender = executor.sender();
+
+                    if (executor.isPlayer()) {
+                        Player player = (Player) sender;
+                        if (player.rank() != PlayerRank.ADMIN) {
+                            throw executor.fail("You must be admin to perform this command.");
+                        }
+                    }
+                    String rankIdString = executor.get(rankName);
+                    Player player = executor.get(target);
+                    if (player == null) {
+                        throw executor.fail("Couldn't find that user.");
+                    }
+                    try {
+                        PlayerRank playerRank = PlayerRank.valueOf(rankIdString.toUpperCase());
+
+                        UserData userData = player.pitData();
+
+                        player.savePitData(userData.rank(playerRank));
+                        player.sendMessage(Text.of("You are now ").color(TextColor.GREEN)
+                                .append(Text.of(playerRank.name(), playerRank.color()))
+                                .append(Text.of(".", TextColor.GREEN)));
+
+                        executor.reply("<green>Success!");
+                    } catch (IllegalArgumentException e) {
+                        throw executor.fail(e.getMessage());
+                    }
+                }).
+                build();
     }
 }

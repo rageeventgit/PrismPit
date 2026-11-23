@@ -62,8 +62,11 @@ public class GameRules {
         subscriptions.add(instance.events().on(EntityDamageEvent.class, event -> {
             Entity entity = event.entity();
             Pos entityPosition = entity.position();
-            if (!mapData.isIn("spawn_region", entityPosition.x(), entityPosition.y(), entityPosition.z())) return;
-            event.setCancelled(true);
+            if (mapData.isIn("spawn_region", entityPosition.x(), entityPosition.y(), entityPosition.z())){
+                event.setCancelled(true);
+                return;
+            }
+            //TODO: Combat, will have a system that makes it incredibly easy to make enchants and all of that stuff.
         }));
 
         subscriptions.add(instance.events().on(PlayerRegionEvent.class, event -> {
@@ -76,7 +79,6 @@ public class GameRules {
             else
                 player.sendStylizedMessage("REGIONS", TextColor.DARK_AQUA, "<red>You left <gold>${regionName}</gold>!");
         }));
-
 
         instance.scheduler().every(4, task -> {
             if (mapData == null || !instance.isLoaded()) {
@@ -110,7 +112,7 @@ public class GameRules {
         regionStore.clear();
     }
 
-    private class UserRegionStore {
+    private static class UserRegionStore {
         private final ConcurrentMap<UUID, String> usersInRegions = new ConcurrentHashMap<>();
 
         public void addToRegion(UUID player, Region region) {

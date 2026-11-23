@@ -24,6 +24,7 @@ public class PlayerExtensions {
 
     public static void savePitData(@This Player player, UserData userData) {
         playerTracker.put(player.uuid(), userData);
+
     }
 
     public static void removePitData(@This Player player) {
@@ -35,8 +36,11 @@ public class PlayerExtensions {
     }
 
     public static void sendStylizedMessage(@This Player player, String header, TextColor headColor, String markup) {
+        sendStylizedMessage(player, header, headColor, Text.parse(markup));
+    }
+
+    public static void sendStylizedMessage(@This Player player, String header, TextColor headColor, Text bodyText) {
         Text stylizedSubject = Text.of(header.toUpperCase(), headColor).bold();
-        Text bodyText = Text.parse(markup);
 
         player.sendMessage(Text.join(JoinConfig.spaces(), stylizedSubject, bodyText));
     }
