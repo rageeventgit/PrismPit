@@ -40,6 +40,7 @@ public class UserData {
 
     private byte[] inventory;
     private byte[] enderChest;
+
     public int flattenLevel() {
         if (level < 10)
             return 1;
@@ -48,11 +49,19 @@ public class UserData {
     }
 
     public Text levelText() {
-        Text levelText = Text.of(Integer.toString(level),levelInfo().color());
+        Text levelText = Text.of(Integer.toString(level), levelInfo().color());
         if (level >= 60)
             levelText = levelText.bold();
 
         return levelText;
+    }
+
+    public int levelExperience() {
+        return Math.toIntExact(Math.round(levelInfo().xp() * prestige.multiplier()));
+    }
+
+    public int neededExperience() {
+        return levelExperience() - experience;
     }
 
     public PlayerLevel levelInfo() {

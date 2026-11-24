@@ -92,13 +92,13 @@ public class GameRules {
                 player.inventory().clear();
                 return;
             }
-
             if (!event.to().name().equalsIgnoreCase(instance.name())) return;
             UserData userData = player.pitData();
             PlayerGameTag.createTeam(player, teams);
             InventoryBytes.load(userData.inventory(), player.inventory());
             InventoryBytes.load(userData.enderChest(), player.enderChest());
 
+            teams.show(player);
             instance.players().forEach(teams::show);
             gameBoard.show(player);
         }));
@@ -108,8 +108,16 @@ public class GameRules {
                 PlayerGameTag.get(player, teams).ifPresent(team -> team.display(PlayerGameTag.format(player.pitData())));
                 return;
             }
-            System.out.println("We got ts");
+            if (event.type() == PlayerDataUpdateEvent.StatType.EXPERIENCE) {
+                UserData userData = player.pitData();
+                int givenExperience = event.typedValue(Integer.class);
+                player.savePitData(userData.experience(userData.experience() + givenExperience));
+
+
+                return;
+            }
             PlayerGameTag.createTeam(player, teams);
+            teams.show(player);
             instance.players().forEach(teams::show);
         }));
     }

@@ -54,7 +54,6 @@ public final class PitPlugin implements Plugin {
 
         Instance defaultInstance = context.server().instances().defaultInstance();
         new LobbyRules(defaultInstance, playerTracker);
-
         gameInstance = new GameInstance(datum, fernClient, context, playerTracker);
         gameInstance.chooseMap();
         gameInstance.grabMapData();

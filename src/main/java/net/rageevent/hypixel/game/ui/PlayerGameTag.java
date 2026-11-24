@@ -7,6 +7,7 @@ import dev.prism.api.scoreboard.Teams;
 import dev.prism.api.text.Text;
 import dev.prism.api.text.TextColor;
 import lombok.experimental.UtilityClass;
+import net.rageevent.hypixel.game.GameSettings;
 import net.rageevent.hypixel.player.UserData;
 
 import java.util.Optional;
@@ -35,15 +36,12 @@ public class PlayerGameTag {
 
 
     private String teamName(Player player, UserData data) {
-        return String.format("%02d%03d", data.rank().ordinal(), 999 - data.level()) + player.uuid();
+        return String.format("%02d%02d%03d", data.rank().ordinal(), data.prestige().ordinal(), 999 - data.level()) + player.uuid();
     }
 
     public TeamDisplay format(UserData userData) {
-        TextColor bracketColor = userData.prestige().bracketColor();
         return TeamDisplay.of(userData.rank().color())
-                .prefix(Text.of("[", bracketColor)
-                        .append(userData.levelText())
-                        .append(Text.of("]", bracketColor))
+                .prefix(PlayerDesign.formattedLevel(userData)
                         .appendSpace())
                 .suffix(userData.bounty() > 0 ? Text.of(userData.bounty() + "g", TextColor.GOLD).bold() : Text.EMPTY);
     }

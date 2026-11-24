@@ -5,6 +5,8 @@ import dev.prism.api.combat.CombatSettings;
 import dev.prism.api.command.*;
 import dev.prism.api.entity.Player;
 import dev.prism.api.plugin.PluginContext;
+import dev.prism.api.sound.Sound;
+import dev.prism.api.sound.Sounds;
 import dev.prism.api.text.Text;
 import dev.prism.api.text.TextColor;
 import dev.prism.api.world.Instance;
@@ -26,6 +28,7 @@ public class StaffCommands {
         commands.register(rankCommand(context));
         commands.register(levelCommand(context));
         commands.register(prestigeCommand(context));
+        commands.register(experienceCommand(context));
 
         Argument<String> mapName = Args.greedy("mapName");
         Instance defaultInstance = context.server().instances().defaultInstance();
@@ -116,6 +119,48 @@ public class StaffCommands {
                 .build();
     }
 
+    private Command experienceCommand(PluginContext context) {
+        Argument<Player> target = Args.player("target").optional();
+        Argument<Integer> experience = Args.integer("experience", 1, 120);
+
+        return Command.create("experience", "xp")
+                .sub(Command.create("get").argument(target).executes(executor -> {
+                    if (executor.isPlayer() && executor.player().rank() != PlayerRank.ADMIN)
+                        executor.fail("You must be admin or higher to use this");
+                    Player targetPlayer = executor.get(target);
+                    if (targetPlayer == null && executor.isPlayer())
+                        targetPlayer = executor.player();
+                    else if (targetPlayer == null && !executor.isPlayer()) {
+                        throw executor.fail("You must supply a player");
+                    }
+                    UserData userData = targetPlayer.pitData();
+                    executor.reply("<yellow>Needed Experience:</yellow> <aqua>%,d</aqua>".formatted(userData.neededExperience()));
+                    executor.reply("<yellow>Level Experience:</yellow> <aqua>%,d</aqua>".formatted(userData.levelExperience()));
+                }).build())
+                .argument(experience)
+                .argument(target)
+                .executes(executor -> {
+                    if (executor.isPlayer() && executor.player().rank() != PlayerRank.ADMIN)
+                        executor.fail("You must be admin or higher to use this");
+
+                    int givenExperience = executor.get(experience);
+                    Player targetPlayer = executor.get(target);
+
+                    if (targetPlayer == null && executor.isPlayer())
+                        targetPlayer = executor.player();
+                    else if (targetPlayer == null && !executor.isPlayer()) {
+                        throw executor.fail("You must supply a player");
+                    }
+
+                    targetPlayer.playSound(Sound.of(Sounds.ENTITY_ARROW_HIT_PLAYER).pitch(2));
+                    targetPlayer.sendStylizedMessage("UPGRADE", TextColor.GOLD, Text.parse("You have been given <aqua>%,d XP</aqua>!".formatted(givenExperience)));
+
+                    context.server().events().post(PlayerDataUpdateEvent.of(targetPlayer, PlayerDataUpdateEvent.StatType.EXPERIENCE, givenExperience));
+                    executor.reply("<green>Success");
+                })
+                .build();
+    }
+
     private Command prestigeCommand(PluginContext context) {
         Argument<Player> target = Args.player("target").optional();
         Argument<Integer> prestige = Args.integer("prestige", 0, 50);
@@ -140,9 +185,7 @@ public class StaffCommands {
                     UserData userData = targetPlayer.pitData();
                     PlayerPrestige playerPrestige = upgradedPrestige == 0 ? PlayerPrestige.P0 : PlayerPrestige.valueOf(RomanNumber.toRoman(upgradedPrestige));
 
-                    userData = userData.prestige(playerPrestige);
-
-                    targetPlayer.savePitData(userData);
+                    targetPlayer.savePitData(userData.prestige(playerPrestige));
                     targetPlayer.sendStylizedMessage("UPGRADE", TextColor.GOLD,
                             Text.parse("Your <aqua>prestige</aqua> has been set to ")
                                     .append(Text.of(playerPrestige.name(), playerPrestige.bracketColor()))
