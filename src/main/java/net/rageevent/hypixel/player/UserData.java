@@ -36,9 +36,10 @@ public class UserData {
 
     private List<RenownPerk> renownPerks;
     private List<StandardPerk> standardPerks;
-
     private List<AdminSetting> adminSettings;
 
+    private byte[] inventory;
+    private byte[] enderChest;
     public int flattenLevel() {
         if (level < 10)
             return 1;
@@ -71,7 +72,9 @@ public class UserData {
                 0,
                 new ArrayList<>(),
                 new ArrayList<>(),
-                new ArrayList<>()
+                new ArrayList<>(),
+                new byte[0],
+                new byte[0]
         );
     }
 

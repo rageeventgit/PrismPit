@@ -1,4 +1,4 @@
-package net.rageevent.hypixel.game.instance;
+package net.rageevent.hypixel.game.rule;
 
 import dev.prism.api.combat.CombatSettings;
 import dev.prism.api.entity.GameMode;

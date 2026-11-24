@@ -14,6 +14,7 @@ import dev.prism.api.world.InstanceSpec;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.rageevent.fern.FernClient;
+import net.rageevent.hypixel.game.rule.GameRules;
 import net.rageevent.hypixel.player.data.PlayerTracker;
 
 import java.util.List;
@@ -32,6 +33,8 @@ public class GameInstance {
     private boolean mapInitialized;
 
     private GameRules gameRules;
+    private GameSchedule gameSchedule;
+
 
     @Getter
     private GameMap mapData;
@@ -76,6 +79,7 @@ public class GameInstance {
                         .blockDrops(false)
                         .pvp(true);
                 this.gameRules = new GameRules(mapData,context, mapInstance, playerTracker);
+                this.gameSchedule = new GameSchedule(mapData,context,mapInstance,playerTracker);
                 mapInitialized = true;
             }));
         }));

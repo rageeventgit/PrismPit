@@ -1,7 +1,6 @@
-package net.rageevent.hypixel.game.instance;
+package net.rageevent.hypixel.game.rule;
 
 import dev.datum.GameMap;
-import dev.datum.Region;
 import dev.prism.api.entity.Entity;
 import dev.prism.api.entity.Player;
 import dev.prism.api.event.Subscription;
@@ -14,30 +13,31 @@ import dev.prism.api.scoreboard.*;
 import dev.prism.api.text.Text;
 import dev.prism.api.text.TextColor;
 import dev.prism.api.world.Instance;
+import net.rageevent.hypixel.game.events.PlayerDataUpdateEvent;
+import net.rageevent.hypixel.game.instance.GameSchedule;
 import net.rageevent.hypixel.game.ui.GameBoard;
 import net.rageevent.hypixel.game.GameSettings;
 import net.rageevent.hypixel.game.events.PlayerRegionEvent;
+import net.rageevent.hypixel.game.ui.PlayerGameTag;
 import net.rageevent.hypixel.player.UserData;
+import net.rageevent.hypixel.player.data.InventoryBytes;
 import net.rageevent.hypixel.player.data.PlayerTracker;
 import net.rageevent.hypixel.player.enums.PlayerPrestige;
 import net.rageevent.hypixel.player.enums.PlayerRank;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 public class GameRules {
 
     private final List<Subscription> subscriptions = new ArrayList<>();
-    private final UserRegionStore regionStore = new UserRegionStore();
+    private final GameSchedule.UserRegionStore regionStore = new GameSchedule.UserRegionStore();
 
     public GameRules(GameMap mapData, PluginContext context, Instance instance, PlayerTracker playerTracker) {
         GameBoard gameBoard = new GameBoard(playerTracker);
 
-        Teams teams = context.server().scoreboards().createTeams();
-        teams.refresh(GameSettings.NAMETAG_UPDATE_RATE);
+        Teams teams = context.server().scoreboards().createTeams()
+                .refresh(GameSettings.NAMETAG_UPDATE_RATE);
 
         subscriptions.add(instance.events().on(PlayerChatEvent.class, event -> event.setFormat((player, message) -> {
             UserData userData = playerTracker.getOrCreate(player);
@@ -79,7 +79,6 @@ public class GameRules {
             Player player = event.player();
             PlayerRegionEvent.Status status = event.status();
             String regionName = event.regionName();
-
             if (status == PlayerRegionEvent.Status.ENTERED)
                 player.sendStylizedMessage("REGIONS", TextColor.DARK_AQUA, "<yellow>You entered <gold>${regionName}</gold>!");
             else
@@ -89,51 +88,30 @@ public class GameRules {
             Player player = event.player();
             if (event.from() != null && event.from().name().equalsIgnoreCase(instance.name())) {
                 player.showBoard(null);
-                teams.remove(player.uuid().toString());
+                PlayerGameTag.removeTeam(player, teams);
+                player.inventory().clear();
                 return;
             }
 
             if (!event.to().name().equalsIgnoreCase(instance.name())) return;
             UserData userData = player.pitData();
+            PlayerGameTag.createTeam(player, teams);
+            InventoryBytes.load(userData.inventory(), player.inventory());
+            InventoryBytes.load(userData.enderChest(), player.enderChest());
 
-            Team team = teams.create(player.uuid().toString());
-            TextColor bracketColor = userData.prestige().bracketColor();
-            team.display(TeamDisplay.of(userData.rank().color())
-                    .prefix(Text.of("[", bracketColor)
-                            .append(userData.levelText())
-                            .append(Text.of("]", bracketColor))
-                            .appendSpace())
-                    .suffix(userData.bounty() > 0 ? Text.of(userData.bounty() + "g", TextColor.GOLD).bold() : Text.EMPTY)
-            );
-            team.add(player);
             instance.players().forEach(teams::show);
             gameBoard.show(player);
         }));
-        instance.scheduler().every(GameSettings.REGION_CHECK_RATE, task -> {
-            if (mapData == null || !instance.isLoaded()) {
-                task.cancel(); //Make sure it's shutdown.
+        subscriptions.add(instance.events().on(PlayerDataUpdateEvent.class, event -> {
+            Player player = event.player();
+            if (event.type() == PlayerDataUpdateEvent.StatType.BOUNTY) {
+                PlayerGameTag.get(player, teams).ifPresent(team -> team.display(PlayerGameTag.format(player.pitData())));
                 return;
             }
-            List<Region> regions = mapData.regions();
-            for (Player player : instance.players()) {
-                Pos playerPosition = player.position();
-                UUID playerId = player.uuid();
-
-                for (Region region : regions) {
-                    if (region.type().equalsIgnoreCase("spawn_region")) continue;
-                    boolean isInRegion = region.contains(playerPosition.x(), playerPosition.y(), playerPosition.z());
-
-                    if (isInRegion && !regionStore.isUserStoredInRegion(playerId, region)) {
-                        instance.events().post(new PlayerRegionEvent(player, PlayerRegionEvent.Status.ENTERED, region.id()));
-                        regionStore.addToRegion(playerId, region);
-                    } else if (!isInRegion && regionStore.isUserStoredInRegion(playerId, region)) {
-                        instance.events().post(new PlayerRegionEvent(player, PlayerRegionEvent.Status.LEFT, region.id()));
-                        regionStore.removeFromRegion(playerId);
-                    }
-                }
-
-            }
-        });
+            System.out.println("We got ts");
+            PlayerGameTag.createTeam(player, teams);
+            instance.players().forEach(teams::show);
+        }));
     }
 
     public void stop() {
@@ -141,26 +119,5 @@ public class GameRules {
         regionStore.clear();
     }
 
-    private static class UserRegionStore {
-        private final ConcurrentMap<UUID, String> usersInRegions = new ConcurrentHashMap<>();
 
-        public void addToRegion(UUID player, Region region) {
-            usersInRegions.putIfAbsent(player, region.id());
-        }
-
-        public void removeFromRegion(UUID player) {
-            usersInRegions.remove(player);
-        }
-
-        public boolean isUserStoredInRegion(UUID player, Region region) {
-            String regionId = usersInRegions.get(player);
-            if (regionId == null)
-                return false;
-            return regionId.equals(region.id());
-        }
-
-        public void clear() {
-            usersInRegions.clear();
-        }
-    }
 }

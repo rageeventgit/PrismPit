@@ -12,7 +12,7 @@ import net.rageevent.fern.FernClient;
 import net.rageevent.hypixel.commands.PlayerCommands;
 import net.rageevent.hypixel.commands.StaffCommands;
 import net.rageevent.hypixel.game.instance.GameInstance;
-import net.rageevent.hypixel.game.instance.LobbyRules;
+import net.rageevent.hypixel.game.rule.LobbyRules;
 import net.rageevent.hypixel.player.PlayerExtensions;
 import net.rageevent.hypixel.player.data.PlayerTracker;
 

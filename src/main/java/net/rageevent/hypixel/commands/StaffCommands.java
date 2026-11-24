@@ -10,6 +10,7 @@ import dev.prism.api.text.TextColor;
 import dev.prism.api.world.Instance;
 import dev.prism.api.world.InstanceSpec;
 import net.rageevent.fern.FernClient;
+import net.rageevent.hypixel.game.events.PlayerDataUpdateEvent;
 import net.rageevent.hypixel.player.UserData;
 import net.rageevent.hypixel.player.enums.PlayerLevel;
 import net.rageevent.hypixel.player.enums.PlayerPrestige;
@@ -22,9 +23,10 @@ public class StaffCommands {
 
     public StaffCommands(PluginContext context, FernClient fernClient) {
         CommandManager commands = context.commands();
-        commands.register(rankCommand());
-        commands.register(levelCommand());
-        commands.register(prestigeCommand());
+        commands.register(rankCommand(context));
+        commands.register(levelCommand(context));
+        commands.register(prestigeCommand(context));
+
         Argument<String> mapName = Args.greedy("mapName");
         Instance defaultInstance = context.server().instances().defaultInstance();
         commands.register(Command.create("loadmap").argument(mapName).executes(executor -> {
@@ -78,7 +80,7 @@ public class StaffCommands {
                 build());
     }
 
-    private Command levelCommand() {
+    private Command levelCommand(PluginContext context) {
         Argument<Player> target = Args.player("target").optional();
         Argument<Integer> level = Args.integer("level", 1, 120);
 
@@ -108,12 +110,13 @@ public class StaffCommands {
                                     .append(Text.of(upgradedLevel + "", playerLevel.color()))
                                     .append(Text.of(".", TextColor.WHITE))
                     );
+                    context.server().events().post(PlayerDataUpdateEvent.of(targetPlayer, PlayerDataUpdateEvent.StatType.LEVEL, upgradedLevel));
                     executor.reply("<green>Success");
                 })
                 .build();
     }
 
-    private Command prestigeCommand() {
+    private Command prestigeCommand(PluginContext context) {
         Argument<Player> target = Args.player("target").optional();
         Argument<Integer> prestige = Args.integer("prestige", 0, 50);
 
@@ -145,12 +148,13 @@ public class StaffCommands {
                                     .append(Text.of(playerPrestige.name(), playerPrestige.bracketColor()))
                                     .append(Text.of(".", TextColor.WHITE))
                     );
+                    context.server().events().post(PlayerDataUpdateEvent.of(targetPlayer, PlayerDataUpdateEvent.StatType.PRESTIGE, playerPrestige));
                     executor.reply("<green>Success");
                 })
                 .build();
     }
 
-    private Command rankCommand() {
+    private Command rankCommand(PluginContext context) {
         Argument<String> rankName = Args.string("rankName");
         Argument<Player> target = Args.player("target");
 
@@ -179,6 +183,7 @@ public class StaffCommands {
                                 .append(Text.of(".", TextColor.GREEN)));
 
                         executor.reply("<green>Success!");
+                        context.server().events().post(PlayerDataUpdateEvent.of(player, PlayerDataUpdateEvent.StatType.RANK, playerRank));
                     } catch (IllegalArgumentException e) {
                         throw executor.fail(e.getMessage());
                     }

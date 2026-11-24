@@ -75,7 +75,9 @@ public class PlayerTracker {
         userDataStorage.put(player, userData);
        // saveAsync(player);
     }
-
+    public void update(Player player){
+        saveAsync(player.uuid());
+    }
     public void remove(UUID player) {
         saveAsync(player);
         userDataStorage.remove(player);

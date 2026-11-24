@@ -53,7 +53,7 @@ public class GameBoard {
                     if (userData.level() == 120) {
                         neededXp = neededXp.append(Text.of("MAXED!", TextColor.AQUA).bold());
                     } else {
-                        int levelXp = (int) (userData.levelInfo().xp() * playerPrestige.multiplier());
+                        int levelXp = (int) Math.round(userData.levelInfo().xp() * playerPrestige.multiplier());
                         neededXp = neededXp.append(Text.of(String.format("%,d", levelXp - userData.experience()), TextColor.AQUA));
                     }
                     Text levelText = Text.of("[", playerPrestige.bracketColor())
