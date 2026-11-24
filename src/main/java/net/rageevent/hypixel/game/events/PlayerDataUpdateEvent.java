@@ -1,11 +1,13 @@
 package net.rageevent.hypixel.game.events;
 
 import dev.prism.api.entity.Player;
+import dev.prism.api.event.instance.InstanceEvent;
 import dev.prism.api.event.player.PlayerEvent;
+import dev.prism.api.world.Instance;
 
-public record PlayerDataUpdateEvent<T>(Player player, StatType type, T value) implements PlayerEvent {
-
-    public enum StatType{
+public record PlayerDataUpdateEvent<T>(Player player, Instance instance, StatType type,
+                                       T value) implements InstanceEvent, PlayerEvent {
+    public enum StatType {
         LEVEL,
         PRESTIGE,
         EXPERIENCE,
@@ -13,11 +15,11 @@ public record PlayerDataUpdateEvent<T>(Player player, StatType type, T value) im
         RANK
     }
 
-    public static PlayerDataUpdateEvent<?> of(Player player, StatType type, Object value){
-        return new PlayerDataUpdateEvent<>(player,type,value);
+    public static PlayerDataUpdateEvent<?> of(Player player, StatType type, Object value) {
+        return new PlayerDataUpdateEvent<>(player, player.instance(), type, value);
     }
 
-    public <R> R value(Class<R> tClass){
+    public <R> R value(Class<R> tClass) {
         return tClass.cast(value);
     }
 }
