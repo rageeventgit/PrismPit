@@ -3,6 +3,9 @@ package net.rageevent.hypixel.game.enchant;
 import dev.prism.api.entity.Player;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import net.rageevent.hypixel.game.combat.DamageAddon;
+
+import java.util.function.Consumer;
 
 @Data
 @Accessors(fluent = true)
@@ -15,9 +18,14 @@ public class EnchantProvider {
       then we get their provider,
       and apply it to the respected fields like xp, gold, and whatever else.
      */
-    private EnchantmentOperator<Player, Player, Double> hit;
+    private EnchantmentOperator<Player, Player, DamageAddon> hit;
     private EnchantmentOperator<Player, Player, Double> gold;
     private EnchantmentOperator<Player, Player, Integer> xp;
-    private ItemEnchants[] disables;
+    private EnchantmentOperator<Player,Player, Consumer<Runnable>> opposingTask; //This will have to be checked with armor and all of that, or swords.
     private BiEnchantmentOperator<Player,Player> killed;
+    private ItemEnchants[] disables;
+
+    public static EnchantProvider of(){
+        return new EnchantProvider();
+    }
 }

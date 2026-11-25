@@ -17,6 +17,8 @@ import dev.prism.api.text.TextColor;
 import dev.prism.api.world.Instance;
 import net.rageevent.hypixel.game.GameSettings;
 import net.rageevent.hypixel.game.combat.DamageCalculator;
+import net.rageevent.hypixel.game.enchant.ItemEnchants;
+import net.rageevent.hypixel.game.enchant.UsableEnchant;
 import net.rageevent.hypixel.game.events.PlayerDataUpdateEvent;
 import net.rageevent.hypixel.game.events.PlayerRegionEvent;
 import net.rageevent.hypixel.game.instance.GameSchedule;
@@ -105,7 +107,7 @@ public class GameRules {
                 base *= 1.5f;
 
             base += damageInfo.enchantments();
-            event.setAmount(damageCalculator.calculate(player, base));
+            event.setAmount(damageCalculator.calculate(player, List.of(), base));
             //TODO: Combat, will have a system that makes it incredibly easy to make enchants and all of that stuff.
         }));
         subscriptions.add(instance.events().on(PlayerRegionEvent.class, event -> {
@@ -119,14 +121,16 @@ public class GameRules {
         }));
         subscriptions.add(instance.events().on(PlayerInstanceChangeEvent.class, event -> {
             Player player = event.player();
+            UserData userData = player.pitData();
+
             if (event.from() != null && !event.from().name().equalsIgnoreCase(instance.name())) {
                 player.showBoard(null);
+                player.savePitData(userData.inventory(InventoryBytes.serialize(player.inventory())).enderChest(InventoryBytes.serialize(player.enderChest())));
                 PlayerGameTag.removeTeam(player, teams);
                 player.inventory().clear();
                 return;
             }
             if (!event.to().name().equalsIgnoreCase(instance.name())) return;
-            UserData userData = player.pitData();
             PlayerGameTag.createTeam(player, teams);
             InventoryBytes.load(userData.inventory(), player.inventory());
             InventoryBytes.load(userData.enderChest(), player.enderChest());
