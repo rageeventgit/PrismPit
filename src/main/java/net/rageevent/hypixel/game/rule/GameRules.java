@@ -1,8 +1,11 @@
 package net.rageevent.hypixel.game.rule;
 
 import dev.datum.GameMap;
+import dev.prism.api.combat.MeleeHit;
+import dev.prism.api.entity.DamageTypes;
 import dev.prism.api.entity.Entity;
 import dev.prism.api.entity.Player;
+import dev.prism.api.entity.Projectile;
 import dev.prism.api.event.Subscription;
 import dev.prism.api.event.entity.EntityDamageEvent;
 import dev.prism.api.event.player.PlayerChatEvent;
@@ -13,8 +16,10 @@ import dev.prism.api.scoreboard.*;
 import dev.prism.api.text.Text;
 import dev.prism.api.text.TextColor;
 import dev.prism.api.world.Instance;
+import net.rageevent.hypixel.game.combat.DamageCalculator;
 import net.rageevent.hypixel.game.events.PlayerDataUpdateEvent;
 import net.rageevent.hypixel.game.instance.GameSchedule;
+import net.rageevent.hypixel.game.mechanic.ExperienceHandler;
 import net.rageevent.hypixel.game.ui.GameBoard;
 import net.rageevent.hypixel.game.GameSettings;
 import net.rageevent.hypixel.game.events.PlayerRegionEvent;
@@ -66,6 +71,8 @@ public class GameRules {
             }
             return Text.join(levelText, playerRank.prefix(), player.displayName()).color(playerRank.color()).append(messageText);
         })));
+        DamageCalculator damageCalculator = new DamageCalculator();
+
         subscriptions.add(instance.events().on(EntityDamageEvent.class, event -> {
             Entity entity = event.entity();
             Pos entityPosition = entity.position();
@@ -73,6 +80,33 @@ public class GameRules {
                 event.setCancelled(true);
                 return;
             }
+            if (!(entity instanceof Player player)) {
+                event.setCancelled(true);
+                return;
+            }
+
+            Player attacker = null;
+
+            if (event.source() instanceof Projectile projectile) {
+                Entity shooter = projectile.shooter();
+                if (shooter instanceof Player shootingPlayer)
+                    attacker = shootingPlayer;
+            } else if (event.source() instanceof Player source)
+                attacker = source;
+
+            if (attacker == null) {
+                event.setCancelled(true);
+                return;
+            }
+
+            MeleeHit damageInfo = event.melee();
+            float base = damageInfo.base();
+
+            if (damageInfo.critical())
+                base *= 1.5f;
+
+            base += damageInfo.enchantments();
+            event.setAmount(damageCalculator.calculate(player, base));
             //TODO: Combat, will have a system that makes it incredibly easy to make enchants and all of that stuff.
         }));
         subscriptions.add(instance.events().on(PlayerRegionEvent.class, event -> {
@@ -86,7 +120,7 @@ public class GameRules {
         }));
         subscriptions.add(instance.events().on(PlayerInstanceChangeEvent.class, event -> {
             Player player = event.player();
-            if (event.from() != null && event.from().name().equalsIgnoreCase(instance.name())) {
+            if (event.from() != null && !event.from().name().equalsIgnoreCase(instance.name())) {
                 player.showBoard(null);
                 PlayerGameTag.removeTeam(player, teams);
                 player.inventory().clear();
@@ -102,6 +136,7 @@ public class GameRules {
             instance.players().forEach(teams::show);
             gameBoard.show(player);
         }));
+        ExperienceHandler experienceHandler = new ExperienceHandler();
         subscriptions.add(instance.events().on(PlayerDataUpdateEvent.class, event -> {
             Player player = event.player();
             if (event.type() == PlayerDataUpdateEvent.StatType.BOUNTY) {
@@ -112,8 +147,7 @@ public class GameRules {
                 UserData userData = player.pitData();
                 int givenExperience = event.typedValue(Integer.class);
                 player.savePitData(userData.experience(userData.experience() + givenExperience));
-
-
+                experienceHandler.handle(player);
                 return;
             }
             PlayerGameTag.createTeam(player, teams);

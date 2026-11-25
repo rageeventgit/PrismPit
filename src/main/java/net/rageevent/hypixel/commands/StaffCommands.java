@@ -121,7 +121,7 @@ public class StaffCommands {
 
     private Command experienceCommand(PluginContext context) {
         Argument<Player> target = Args.player("target").optional();
-        Argument<Integer> experience = Args.integer("experience", 1, 120);
+        Argument<Integer> experience = Args.integer("experience", 1, Integer.MAX_VALUE);
 
         return Command.create("experience", "xp")
                 .sub(Command.create("get").argument(target).executes(executor -> {

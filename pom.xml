@@ -84,7 +84,7 @@
         <dependency>
             <groupId>dev.prism</groupId>
             <artifactId>prism-api</artifactId>
-            <version>0.2.0</version>
+            <version>0.3.0</version>
         </dependency>
         <!-- Source: https://mvnrepository.com/artifact/com.mojang/brigadier -->
         <dependency>
