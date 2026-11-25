@@ -7,13 +7,11 @@ import dev.prism.api.scoreboard.Line;
 import dev.prism.api.text.Style;
 import dev.prism.api.text.Text;
 import dev.prism.api.text.TextColor;
-import dev.prism.api.world.Instance;
 import lombok.RequiredArgsConstructor;
 import net.rageevent.hypixel.player.UserData;
 import net.rageevent.hypixel.player.data.PlayerTracker;
 import net.rageevent.hypixel.player.enums.PlayerPrestige;
 
-import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;

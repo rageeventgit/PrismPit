@@ -12,7 +12,6 @@ public class DamageCalculator {
     public float calculate(Player damaged, float base) {
         double piercing = 0, flat = 0, coefficient = 1;
         double reduction = armorReduction(damaged.inventory());
-
         return (float) ((((double) base + flat) * coefficient * (1 - (reduction * 0.04))) + piercing);
     }
 

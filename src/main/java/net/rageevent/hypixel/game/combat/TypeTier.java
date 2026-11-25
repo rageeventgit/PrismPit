@@ -13,6 +13,7 @@ import java.util.function.Function;
 @Getter
 public enum TypeTier {
 
+    NETHERITE(5),
     DIAMOND(3),
     IRON(1),
     CHAINMAIL(0),
@@ -23,6 +24,7 @@ public enum TypeTier {
         return -1;
     }));
     private final Function<ItemType, Integer> additive;
+
     TypeTier(int additive) {
         this.additive = (itemType -> additive);
     }

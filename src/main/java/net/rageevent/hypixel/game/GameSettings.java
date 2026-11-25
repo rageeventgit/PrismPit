@@ -1,9 +1,6 @@
 package net.rageevent.hypixel.game;
 
-import dev.prism.api.text.Text;
-import dev.prism.api.text.TextColor;
 import lombok.experimental.UtilityClass;
-import net.rageevent.hypixel.player.UserData;
 
 @UtilityClass
 public class GameSettings {

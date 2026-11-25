@@ -2,7 +2,9 @@ package net.rageevent.hypixel.player;
 
 import dev.prism.api.entity.Player;
 import dev.prism.api.text.Text;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import net.rageevent.hypixel.game.RenownPerk;
 import net.rageevent.hypixel.game.StandardPerk;

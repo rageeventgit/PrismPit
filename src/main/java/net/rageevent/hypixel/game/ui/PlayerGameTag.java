@@ -7,7 +7,6 @@ import dev.prism.api.scoreboard.Teams;
 import dev.prism.api.text.Text;
 import dev.prism.api.text.TextColor;
 import lombok.experimental.UtilityClass;
-import net.rageevent.hypixel.game.GameSettings;
 import net.rageevent.hypixel.player.UserData;
 
 import java.util.Optional;
