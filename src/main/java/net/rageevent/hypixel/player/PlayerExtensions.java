@@ -40,6 +40,6 @@ public class PlayerExtensions {
 
     public static void sendStylizedMessage(@This Player player, String header, TextColor headColor, Text bodyText) {
         Text stylizedSubject = Text.of(header.toUpperCase(), headColor).bold();
-        player.sendMessage(Text.join(JoinConfig.spaces(), stylizedSubject, bodyText.color(TextColor.GRAY)));
+        player.sendMessage(Text.join(JoinConfig.spaces(), stylizedSubject, bodyText.colorIfAbsent(TextColor.GRAY)));
     }
 }

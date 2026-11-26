@@ -4,15 +4,20 @@ package net.rageevent.hypixel.commands;
 import dev.prism.api.combat.CombatSettings;
 import dev.prism.api.command.*;
 import dev.prism.api.entity.Player;
+import dev.prism.api.item.Item;
 import dev.prism.api.plugin.PluginContext;
 import dev.prism.api.sound.Sound;
 import dev.prism.api.sound.Sounds;
 import dev.prism.api.text.Text;
 import dev.prism.api.text.TextColor;
+import dev.prism.api.text.Theme;
 import dev.prism.api.world.Instance;
 import dev.prism.api.world.InstanceSpec;
 import net.rageevent.fern.FernClient;
+import net.rageevent.hypixel.game.enchant.ItemEnchant;
+import net.rageevent.hypixel.game.enchant.ItemEnchantHandler;
 import net.rageevent.hypixel.game.events.PlayerDataUpdateEvent;
+import net.rageevent.hypixel.game.item.StoredEnchant;
 import net.rageevent.hypixel.player.UserData;
 import net.rageevent.hypixel.player.enums.PlayerLevel;
 import net.rageevent.hypixel.player.enums.PlayerPrestige;
@@ -20,6 +25,7 @@ import net.rageevent.hypixel.player.enums.PlayerRank;
 import net.rageevent.hypixel.util.RomanNumber;
 
 import java.time.Duration;
+import java.util.List;
 
 public class StaffCommands {
 
@@ -29,7 +35,7 @@ public class StaffCommands {
         commands.register(levelCommand(context));
         commands.register(prestigeCommand(context));
         commands.register(experienceCommand(context));
-
+        commands.register(enchantCommand());
         Argument<String> mapName = Args.greedy("mapName");
         Instance defaultInstance = context.server().instances().defaultInstance();
         commands.register(Command.create("loadmap").argument(mapName).executes(executor -> {
@@ -193,6 +199,57 @@ public class StaffCommands {
                     );
                     context.server().events().post(PlayerDataUpdateEvent.of(targetPlayer, PlayerDataUpdateEvent.StatType.PRESTIGE, playerPrestige));
                     executor.reply("<green>Success");
+                })
+                .build();
+    }
+
+    private Command enchantCommand() {
+        Argument<String> enchantment = Args.word("enchantment");
+        Argument<Integer> level = Args.integer("level").orElse(1);
+
+        return Command.create("customenchant", "customench").playerOnly()
+                .sub(Command.create("get").playerOnly().executes(executor -> {
+                    Player player = executor.player();
+                    Item inHand = player.inventory().mainHand();
+
+                    if (inHand.isEmpty())
+                        throw executor.fail("You must have an item in your hand.");
+
+                    List<StoredEnchant> storedEnchants = ItemEnchantHandler.getAll(inHand);
+
+                    player.sendMessage(Theme.header("Enchantment Info"));
+                    player.sendMessage(Theme.field("Count", String.valueOf(storedEnchants.size())));
+                    if (storedEnchants.isEmpty()) {
+                        player.sendMessage(Theme.error("No enchants on this item."));
+                        return;
+                    }
+                    storedEnchants.forEach(storedEnchant -> {
+                        player.sendMessage(Theme.field(storedEnchant.enchantId().toLowerCase(), String.valueOf(storedEnchant.level())));
+                    });
+                }).build())
+                .argument(enchantment)
+                .argument(level)
+                .executes(executor -> {
+                    Player player = executor.player();
+                    Item inHand = player.inventory().mainHand();
+
+                    if (inHand.isEmpty())
+                        throw executor.fail("You must have an item in your hand.");
+
+                    String enchantmentId = executor.get(enchantment);
+                    int levelWanted = executor.get(level);
+
+                    ItemEnchant itemEnchant = ItemEnchant.byId(enchantmentId.toUpperCase()).orElseThrow(() -> executor.fail("That enchant is not valid"));
+
+                    if(!itemEnchant.applicable(inHand.type()))
+                        throw executor.fail("Ths enchant cannot be applied to this item.");
+
+                    if (levelWanted > itemEnchant.maxLevel())
+                        throw executor.fail("${itemEnchant.displayName()} has a max level of ${itemEnchant.maxLevel()}");
+
+                    player.inventory().setMainHand(ItemEnchantHandler.apply(inHand, itemEnchant, levelWanted));
+                    player.sendStylizedMessage("ENCHANTING", TextColor.LIGHT_PURPLE,
+                            "Successfully applied <blue>${itemEnchant.displayName()} ${RomanNumber.toRoman(levelWanted)}</blue> to your <yellow>item</yellow>!");
                 })
                 .build();
     }

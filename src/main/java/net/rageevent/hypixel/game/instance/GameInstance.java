@@ -5,6 +5,7 @@ import dev.datum.Datum;
 import dev.datum.GameMap;
 import dev.datum.MapInfo;
 import dev.datum.Marker;
+import dev.prism.api.anticheat.Check;
 import dev.prism.api.combat.CombatSettings;
 import dev.prism.api.entity.Player;
 import dev.prism.api.math.Pos;
@@ -33,8 +34,6 @@ public class GameInstance {
     private boolean mapInitialized;
 
     private GameRules gameRules;
-    private GameSchedule gameSchedule;
-
 
     @Getter
     private GameMap mapData;
@@ -77,9 +76,11 @@ public class GameInstance {
                         .fireSpreads(false)
                         .fluidsFlow(false)
                         .blockDrops(false)
+                        .hunger(false)
                         .pvp(true);
-                this.gameRules = new GameRules(mapData,context, mapInstance, playerTracker);
-                this.gameSchedule = new GameSchedule(mapData,context,mapInstance,playerTracker);
+
+                this.gameRules = new GameRules(mapData, context, this, mapInstance, playerTracker);
+                new GameSchedule(mapData, context, mapInstance, playerTracker);
                 mapInitialized = true;
             }));
         }));
@@ -102,8 +103,12 @@ public class GameInstance {
     }
 
     public void transport(Player player) {
+        player.setInstance(mapInstance, spawn());
+    }
+
+    public Pos spawn() {
         Marker playerSpawn = mapData.requireMarker("player_spawn");
-        player.setInstance(mapInstance, Pos.of(playerSpawn.x(), playerSpawn.y(), playerSpawn.z(), playerSpawn.yaw(), playerSpawn.pitch()));
+        return Pos.of(playerSpawn.x(), playerSpawn.y(), playerSpawn.z(), playerSpawn.yaw(), playerSpawn.pitch());
     }
 
     public void grabMapData() {

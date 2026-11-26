@@ -1,19 +1,22 @@
 package net.rageevent.hypixel.game.enchant;
 
+import dev.prism.api.item.ItemType;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 import net.rageevent.hypixel.game.combat.DamageAddon;
 import net.rageevent.hypixel.game.combat.OperationType;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 
 @RequiredArgsConstructor
 @Accessors(fluent = true)
 @Getter
-public enum ItemEnchants {
-
+public enum ItemEnchant {
     SHARK(EnchantCategory.NORMAL, "Shark", (level) -> {
         int percentage = 2;
         if (level == 2)
@@ -31,12 +34,27 @@ public enum ItemEnchants {
             percentage = 4;
         if (level == 3)
             percentage = 7;
-        return DamageAddon.normal(OperationType.PERCENT, (double) percentage / 100);
+        return DamageAddon.normal(OperationType.PERCENT, percentage);
     })));
     private final EnchantCategory category;
-    private final String name;
+    private final String displayName;
     private final Function<Integer, String> description;
     private final int maxLevel;
     private final List<ApplicableType> applicableTypes;
     private final EnchantProvider provider;
+
+    private static final Map<String, ItemEnchant> BY_ID = new HashMap<>();
+
+    public static Optional<ItemEnchant> byId(String id){
+        return Optional.ofNullable(BY_ID.get(id));
+    }
+
+    static {
+        for (ItemEnchant value : values()) {
+            BY_ID.put(value.name(), value);
+        }
+    }
+    public boolean applicable(ItemType itemType){
+        return applicableTypes.stream().anyMatch(applicableType -> applicableType.isApplicable(itemType));
+    }
 }

@@ -7,6 +7,9 @@ import dev.prism.api.event.Subscription;
 import dev.prism.api.event.player.PlayerChatEvent;
 import dev.prism.api.event.player.PlayerConfigureEvent;
 import dev.prism.api.event.player.PlayerJoinEvent;
+import dev.prism.api.plugin.PluginContext;
+import dev.prism.api.scoreboard.TeamDisplay;
+import dev.prism.api.scoreboard.Teams;
 import dev.prism.api.text.Text;
 import dev.prism.api.text.TextColor;
 import dev.prism.api.world.Instance;
@@ -37,8 +40,9 @@ public class LobbyRules {
         }));
         subscriptions.add(instance.events().on(PlayerJoinEvent.class, event -> {
             Player player = event.player();
+            PlayerRank playerRank = player.rank();
             event.setJoinMessage(
-                    player.rank().prefix().append(player.displayName())
+                    playerRank.prefix().append(player.displayName())
                             .appendSpace()
                             .append(Text.of("has joined the lobby!", TextColor.YELLOW)));
         }));

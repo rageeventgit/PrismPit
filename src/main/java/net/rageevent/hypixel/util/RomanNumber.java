@@ -27,7 +27,6 @@ public class RomanNumber {
                     "Input must be between 1 and 3999. Received: " + number
             );
         }
-
         StringBuilder result = new StringBuilder();
 
         for (int i = 0; i < VALUES.length && number > 0; i++) {

@@ -21,15 +21,15 @@ public class DamageCalculator {
                 piercing += addon.value();
                 continue;
             }
-            //noinspection SwitchStatementWithTooFewBranches
             switch (addon.operationType()) {
                 case FLAT -> flat += addon.value();
+                case PERCENT -> percentages += addon.value();
                 case MULTIPLIER -> coefficient *= addon.value();
             }
         }
-
         double reduction = armorReduction(damaged.inventory());
-        return (float) ((((double) base + flat) * coefficient * (1 - (reduction * 0.04))) + piercing);
+        double additive = 1.0 + (percentages / 100);
+        return (float) ((((double) base + flat) * additive * coefficient * (1 - (reduction * 0.04))) + piercing);
     }
 
     private double armorReduction(PlayerInventory inventory) {

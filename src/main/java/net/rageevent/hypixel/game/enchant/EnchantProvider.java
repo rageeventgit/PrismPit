@@ -23,7 +23,7 @@ public class EnchantProvider {
     private EnchantmentOperator<Player, Player, Integer> xp;
     private EnchantmentOperator<Player,Player, Consumer<Runnable>> opposingTask; //This will have to be checked with armor and all of that, or swords.
     private BiEnchantmentOperator<Player,Player> killed;
-    private ItemEnchants[] disables;
+    private ItemEnchant[] disables;
 
     public static EnchantProvider of(){
         return new EnchantProvider();
