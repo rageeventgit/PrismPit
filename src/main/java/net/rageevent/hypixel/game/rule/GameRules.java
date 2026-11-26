@@ -44,6 +44,9 @@ import net.rageevent.hypixel.player.enums.PlayerRank;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class GameRules {
 
@@ -115,21 +118,39 @@ public class GameRules {
 
             List<DamageAddon> damageAddons = new ArrayList<>();
             List<StoredEnchant> enchants = ItemEnchantHandler.fromInventory(attacker.inventory());
-
             Player finalAttacker = attacker;
+
             for (StoredEnchant enchant : enchants) {
-                finalAttacker.sendMessage("<yellow>Stored Enchant: <blue>${enchant.enchantId()}");
-                ItemEnchant.byId(enchant.enchantId().toUpperCase()).ifPresent(itemEnchant -> {
-                    finalAttacker.sendMessage("<yellow>Found Enchant: <blue>${itemEnchant.displayName()}");
-                    damageAddons.add(itemEnchant.provider().hit().apply(finalAttacker, player, new UsableEnchant(enchant.level(), List.of())));
+                ItemEnchant.fromStored(enchant).map(ItemEnchant::provider).ifPresent(provider -> {
+                    if (provider.hit() != null)
+                        damageAddons.add(provider.hit().apply(finalAttacker, player, new UsableEnchant(enchant.level(), List.of())));
                 });
             }
+
             float calculate = damageCalculator.calculate(player, damageAddons, base);
             event.setAmount(calculate);
             attacker.sendStylizedMessage("DAMAGE", TextColor.DARK_GREEN, "<red>$calculate</red>");
 
-            if (calculate > player.health()) {
-                //TODO: Add xp, gold, and whatever else there is.
+            if (player.health() - calculate <= 0) {
+                event.setCancelled(true);
+                player.setHealth(20);
+
+                AtomicInteger givenXp = new AtomicInteger(5 + ThreadLocalRandom.current().nextInt(5, 10));
+                AtomicReference<Double> givenGold = new AtomicReference<>(ThreadLocalRandom.current().nextDouble(5, 25));
+
+                for (StoredEnchant enchant : enchants) {
+                    ItemEnchant.fromStored(enchant).map(ItemEnchant::provider).ifPresent(provider -> {
+                        UsableEnchant usableEnchant = new UsableEnchant(enchant.level(), List.of());
+                        if (provider.gold() != null)
+                            givenGold.updateAndGet(v -> v + provider.gold().apply(finalAttacker, player, usableEnchant));
+                        if (provider.xp() != null)
+                            givenXp.addAndGet(provider.xp().apply(finalAttacker, player, usableEnchant));
+                        if (provider.killed() != null)
+                            provider.killed().apply(finalAttacker, player, usableEnchant);
+                    });
+                }
+                attacker.instance().events().post(PlayerDataUpdateEvent.of(attacker, PlayerDataUpdateEvent.StatType.EXPERIENCE, givenXp.get()));
+
                 player.sendStylizedMessage("DEATH", TextColor.RED,
                         Text.of("Killed by ", TextColor.GRAY)
                                 .append(PlayerDesign.formattedLevel(attacker.pitData()))
@@ -137,6 +158,16 @@ public class GameRules {
                                 .append(player.displayName().color(player.rank().color()))
                                 .append(Text.of(".", TextColor.GRAY))
                 );
+                attacker.sendStylizedMessage("KILL", TextColor.GREEN,
+                        PlayerDesign.formattedLevel(player.pitData())
+                                .append(player.displayName().color(player.rank().color()))
+                                .appendSpace()
+                                .append(Text.of("+${givenXp.get()}XP", TextColor.AQUA).appendSpace())
+                                .append(Text.of("+${givenGold.get()}g", TextColor.GOLD))
+                );
+                attacker.sendActionBar(player.displayName().color(player.rank().color())
+                        .appendSpace().append(Text.of("KILL!", TextColor.GREEN).bold()));
+
                 player.showTitle(Title.of(Text.EMPTY, Text.of("YOU DIED!", TextColor.RED).bold()));
                 player.playSound(Sound.of(Sounds.BLOCK_ANVIL_PLACE).pitch(2));
                 player.teleport(gameInstance.spawn());

@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 import net.rageevent.hypixel.game.combat.DamageAddon;
 import net.rageevent.hypixel.game.combat.OperationType;
+import net.rageevent.hypixel.game.item.StoredEnchant;
 
 import java.util.HashMap;
 import java.util.List;
@@ -35,7 +36,11 @@ public enum ItemEnchant {
         if (level == 3)
             percentage = 7;
         return DamageAddon.normal(OperationType.PERCENT, percentage);
-    })));
+    }))),
+    COLOSSAL_XP(EnchantCategory.CORRUPTED, "Colossal XP", _ -> {
+        return "Gain the <yellow>max</yellow> amount of <aqua>XP</aqua> on kill";
+    }, 1, List.of(ApplicableType.SWORD, ApplicableType.BOW), EnchantProvider.of().xp((_, _, _) -> Integer.MAX_VALUE));
+
     private final EnchantCategory category;
     private final String displayName;
     private final Function<Integer, String> description;
@@ -45,8 +50,12 @@ public enum ItemEnchant {
 
     private static final Map<String, ItemEnchant> BY_ID = new HashMap<>();
 
-    public static Optional<ItemEnchant> byId(String id){
+    public static Optional<ItemEnchant> byId(String id) {
         return Optional.ofNullable(BY_ID.get(id));
+    }
+
+    public static Optional<ItemEnchant> fromStored(StoredEnchant enchant) {
+        return byId(enchant.enchantId().toUpperCase());
     }
 
     static {
@@ -54,7 +63,8 @@ public enum ItemEnchant {
             BY_ID.put(value.name(), value);
         }
     }
-    public boolean applicable(ItemType itemType){
+
+    public boolean applicable(ItemType itemType) {
         return applicableTypes.stream().anyMatch(applicableType -> applicableType.isApplicable(itemType));
     }
 }

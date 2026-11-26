@@ -9,9 +9,10 @@ import java.util.List;
 @UtilityClass
 public class ItemInfoKeys {
 
-    public final DataKey<String> MARKER = DataKey.of("marker", String.class);
+    public final DataKey<ItemMarker> MARKER = DataKey.of("marker", ItemMarker.class);
     public final DataKey<List<StoredEnchant>> ENCHANTMENTS = DataKey.list("enchants", StoredEnchant.class);
     public final DataKey<Integer> MAX_LIVES = DataKey.of("maxLives",Integer.class);
+    public final DataKey<Integer> TIER = DataKey.of("tier",Integer.class);
     public final DataKey<Integer> CURRENT_LIVES = DataKey.of("lives",Integer.class);
 
     public final String CONTAINER_KEY = "custom";

@@ -17,7 +17,9 @@ import net.rageevent.fern.FernClient;
 import net.rageevent.hypixel.game.enchant.ItemEnchant;
 import net.rageevent.hypixel.game.enchant.ItemEnchantHandler;
 import net.rageevent.hypixel.game.events.PlayerDataUpdateEvent;
+import net.rageevent.hypixel.game.item.ItemInfoKeys;
 import net.rageevent.hypixel.game.item.StoredEnchant;
+import net.rageevent.hypixel.game.ui.ItemDesign;
 import net.rageevent.hypixel.player.UserData;
 import net.rageevent.hypixel.player.enums.PlayerLevel;
 import net.rageevent.hypixel.player.enums.PlayerPrestige;
@@ -36,6 +38,7 @@ public class StaffCommands {
         commands.register(prestigeCommand(context));
         commands.register(experienceCommand(context));
         commands.register(enchantCommand());
+        commands.register(itemDataCommand());
         Argument<String> mapName = Args.greedy("mapName");
         Instance defaultInstance = context.server().instances().defaultInstance();
         commands.register(Command.create("loadmap").argument(mapName).executes(executor -> {
@@ -241,16 +244,57 @@ public class StaffCommands {
 
                     ItemEnchant itemEnchant = ItemEnchant.byId(enchantmentId.toUpperCase()).orElseThrow(() -> executor.fail("That enchant is not valid"));
 
-                    if(!itemEnchant.applicable(inHand.type()))
+                    if (!itemEnchant.applicable(inHand.type()))
                         throw executor.fail("Ths enchant cannot be applied to this item.");
 
                     if (levelWanted > itemEnchant.maxLevel())
                         throw executor.fail("${itemEnchant.displayName()} has a max level of ${itemEnchant.maxLevel()}");
-
-                    player.inventory().setMainHand(ItemEnchantHandler.apply(inHand, itemEnchant, levelWanted));
+                    player.inventory().setMainHand(ItemDesign.redesign(ItemEnchantHandler.apply(inHand, itemEnchant, levelWanted)));
                     player.sendStylizedMessage("ENCHANTING", TextColor.LIGHT_PURPLE,
                             "Successfully applied <blue>${itemEnchant.displayName()} ${RomanNumber.toRoman(levelWanted)}</blue> to your <yellow>item</yellow>!");
                 })
+                .build();
+    }
+
+    private Command itemDataCommand() {
+        //Only really need one because it's used throughout the entire thing.
+        Argument<Integer> basicArgument = Args.integer("value").optional();
+
+        return Command.create("itemdata", "idata").playerOnly()
+                .sub(Command.create("maxlives", "ml").argument(basicArgument).executes(executor -> {
+                    Player player = executor.player();
+                    Item inHand = player.inventory().mainHand();
+
+                    if (inHand.isEmpty())
+                        throw executor.fail("You must have an item in your hand.");
+
+                    if (executor.has(basicArgument)) {
+                        int maxLives = executor.get(basicArgument);
+                        Item item = ItemInfoKeys.withInfo(inHand, ItemInfoKeys.MAX_LIVES, maxLives);
+                        player.inventory().setMainHand(ItemInfoKeys.withInfo(item, ItemInfoKeys.CURRENT_LIVES, maxLives));
+                        player.inventory().setMainHand(ItemDesign.redesign(player.inventory().mainHand()));
+                        executor.reply("Success");
+                        return;
+                    }
+                    executor.reply("<gray>Max Lives: <green>" + ItemInfoKeys.info(inHand, ItemInfoKeys.MAX_LIVES, -1));
+                }).build())
+                .sub(Command.create("currentlives", "cl", "lives").argument(basicArgument).executes(executor -> {
+                    Player player = executor.player();
+                    Item inHand = player.inventory().mainHand();
+
+                    if (inHand.isEmpty())
+                        throw executor.fail("You must have an item in your hand.");
+
+                    if (executor.has(basicArgument)) {
+                        int currentLives = executor.get(basicArgument);
+                        player.inventory().setMainHand(ItemInfoKeys.withInfo(inHand, ItemInfoKeys.CURRENT_LIVES, currentLives));
+                        player.inventory().setMainHand(ItemDesign.redesign(player.inventory().mainHand()));
+                        executor.reply("Success");
+                        return;
+                    }
+                    executor.reply("<gray>Lives: <green>" + ItemInfoKeys.info(inHand, ItemInfoKeys.CURRENT_LIVES, -1));
+                }).build())
+
                 .build();
     }
 
