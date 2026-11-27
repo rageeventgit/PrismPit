@@ -1,4 +1,4 @@
-package net.rageevent.hypixel.game.item.enchant;
+package net.rageevent.hypixel.game.item.enchant.enums;
 
 import dev.prism.api.Key;
 import dev.prism.api.item.ItemType;

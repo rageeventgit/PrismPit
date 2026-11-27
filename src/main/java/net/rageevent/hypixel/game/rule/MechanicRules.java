@@ -15,30 +15,34 @@ import dev.prism.api.text.Text;
 import dev.prism.api.text.TextColor;
 import dev.prism.api.ui.Title;
 import dev.prism.api.world.Instance;
+import net.rageevent.hypixel.game.RewardResolver;
 import net.rageevent.hypixel.game.combat.DamageAddon;
 import net.rageevent.hypixel.game.combat.DamageCalculator;
 import net.rageevent.hypixel.game.events.PlayerDataUpdateEvent;
 import net.rageevent.hypixel.game.instance.GameInstance;
 import net.rageevent.hypixel.game.item.StoredEnchant;
-import net.rageevent.hypixel.game.item.enchant.ItemEnchant;
+import net.rageevent.hypixel.game.item.enchant.data.CombatInfo;
+import net.rageevent.hypixel.game.item.enchant.provider.EnchantProvider;
 import net.rageevent.hypixel.game.item.enchant.ItemEnchantHandler;
-import net.rageevent.hypixel.game.item.enchant.UsableEnchant;
+import net.rageevent.hypixel.game.item.enchant.data.UsableEnchant;
 import net.rageevent.hypixel.game.mechanic.ExperienceHandler;
 import net.rageevent.hypixel.game.ui.PlayerDesign;
 import net.rageevent.hypixel.game.ui.PlayerGameTag;
 import net.rageevent.hypixel.player.UserData;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class MechanicRules {
     private final List<Subscription> subscriptions = new ArrayList<>();
 
-    public MechanicRules(GameMap mapData, GameInstance gameInstance, Instance instance, Teams teams){
+    public MechanicRules(GameMap mapData, GameInstance gameInstance, Instance instance, Teams teams) {
         DamageCalculator damageCalculator = new DamageCalculator();
+        RewardResolver<Double> goldResolver = new RewardResolver<>(() -> ThreadLocalRandom.current().nextDouble(5, 25));
+        RewardResolver<Integer> xpResolver = new RewardResolver<>(() -> ThreadLocalRandom.current().nextInt(5, 15));
 
         subscriptions.add(instance.events().on(EntityDamageEvent.class, event -> {
             Entity entity = event.entity();
@@ -61,22 +65,17 @@ public class MechanicRules {
                 return;
             }
             MeleeHit damageInfo = event.melee();
-            float base = damageInfo.base();
-
-            if (damageInfo.critical())
-                base *= 1.5f;
-
-            base += damageInfo.enchantments();
+            float base = damageInfo.damage();
 
             List<DamageAddon> damageAddons = new ArrayList<>();
-            List<StoredEnchant> enchants = ItemEnchantHandler.fromInventory(attacker.inventory());
-            Player finalAttacker = attacker;
+            List<StoredEnchant> attackerEnchants = ItemEnchantHandler.fromInventory(attacker.inventory());
+            List<StoredEnchant> playerEnchants = ItemEnchantHandler.fromInventory(player.inventory());
 
-            for (StoredEnchant enchant : enchants) {
-                ItemEnchant.fromStored(enchant).map(ItemEnchant::provider).ifPresent(provider -> {
-                    if (provider.hit() != null)
-                        damageAddons.add(provider.hit().apply(finalAttacker, player, new UsableEnchant(enchant.level(), List.of())));
-                });
+            Player finalAttacker = attacker;
+            for (StoredEnchant enchant : attackerEnchants) {
+                EnchantProvider provider = enchant.id().provider();
+                if (provider.hit() != null)
+                    damageAddons.add(provider.hit().apply(finalAttacker, player, new UsableEnchant(enchant.level(), playerEnchants)));
             }
             float calculate = damageCalculator.calculate(player, damageAddons, base);
             event.setAmount(calculate);
@@ -85,25 +84,29 @@ public class MechanicRules {
             if (player.health() - calculate <= 0) {
                 event.setCancelled(true);
                 player.setHealth(20);
+                List<RewardResolver.Modifier<Double>> goldModifiers = new ArrayList<>();
+                List<RewardResolver.Modifier<Integer>> xpModifiers = new ArrayList<>();
 
-                AtomicInteger givenXp = new AtomicInteger(5 + ThreadLocalRandom.current().nextInt(5, 10));
-                AtomicReference<Double> givenGold = new AtomicReference<>(ThreadLocalRandom.current().nextDouble(5, 25));
-                for (StoredEnchant enchant : enchants) {
-                    ItemEnchant.fromStored(enchant).map(ItemEnchant::provider).ifPresent(provider -> {
-                        UsableEnchant usableEnchant = new UsableEnchant(enchant.level(), List.of());
-                        if (provider.gold() != null)
-                            givenGold.updateAndGet(v -> v + provider.gold().apply(finalAttacker, player, usableEnchant));
-                        if (provider.xp() != null)
-                            givenXp.addAndGet(provider.xp().apply(finalAttacker, player, usableEnchant));
-                        if (provider.killed() != null)
-                            provider.killed().apply(finalAttacker, player, usableEnchant);
-                    });
+                for (StoredEnchant enchant : attackerEnchants) {
+                    EnchantProvider provider = enchant.id().provider();
+                    UsableEnchant usableEnchant = new UsableEnchant(enchant.level(), playerEnchants);
+                    if (provider.gold() != null)
+                        goldModifiers.add(provider.gold().apply(finalAttacker, player, usableEnchant));
+                    if (provider.xp() != null)
+                        xpModifiers.add(provider.xp().apply(finalAttacker, player, usableEnchant));
+                    if (provider.killed() != null)
+                        provider.killed().apply(finalAttacker, player, new CombatInfo(enchant.level(), playerEnchants, finalAttacker.pitData(), player.pitData()));
                 }
-                attacker.instance().events().post(PlayerDataUpdateEvent.of(attacker, PlayerDataUpdateEvent.StatType.EXPERIENCE, givenXp.get()));
+
+                double givenGold = new BigDecimal(goldResolver.calculate(goldModifiers)).setScale(1, RoundingMode.HALF_UP).doubleValue();
+                int givenXp = (int) xpResolver.calculate(xpModifiers);
+
+                attacker.instance().events().post(PlayerDataUpdateEvent.of(attacker, PlayerDataUpdateEvent.StatType.EXPERIENCE, givenXp));
+                UserData attackerData = attacker.pitData();
 
                 player.sendStylizedMessage("DEATH", TextColor.RED,
                         Text.of("Killed by ", TextColor.GRAY)
-                                .append(PlayerDesign.formattedLevel(attacker.pitData()))
+                                .append(PlayerDesign.formattedLevel(attackerData))
                                 .appendSpace()
                                 .append(player.displayName().color(player.rank().color()))
                                 .appendSpace()
@@ -113,9 +116,11 @@ public class MechanicRules {
                         PlayerDesign.formattedLevel(player.pitData())
                                 .append(player.displayName().color(player.rank().color()))
                                 .appendSpace()
-                                .append(Text.of("+${givenXp.get()} XP", TextColor.AQUA).appendSpace())
-                                .append(Text.of("+${givenGold.get()}g", TextColor.GOLD))
+                                .append(Text.of("+${givenXp} XP", TextColor.AQUA).appendSpace())
+                                .append(Text.of("+${givenGold}g", TextColor.GOLD))
                 );
+                attacker.savePitData(attackerData.gold(attackerData.gold() + givenGold));
+
                 attacker.sendActionBar(player.displayName().color(player.rank().color())
                         .appendSpace().append(Text.of("KILL!", TextColor.GREEN).bold()));
 
@@ -144,7 +149,8 @@ public class MechanicRules {
             instance.players().forEach(teams::show);
         }));
     }
-    public void stop(){
+
+    public void stop() {
         subscriptions.forEach(Subscription::unsubscribe);
     }
 }

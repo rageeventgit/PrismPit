@@ -5,7 +5,6 @@ import dev.prism.api.combat.CombatSettings;
 import dev.prism.api.command.*;
 import dev.prism.api.entity.Player;
 import dev.prism.api.item.Item;
-import dev.prism.api.nbt.Nbt;
 import dev.prism.api.nbt.NbtCompound;
 import dev.prism.api.plugin.PluginContext;
 import dev.prism.api.sound.Sound;
@@ -30,7 +29,6 @@ import net.rageevent.hypixel.util.RomanNumber;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.Map;
 
 public class StaffCommands {
 
@@ -234,7 +232,7 @@ public class StaffCommands {
                         return;
                     }
                     storedEnchants.forEach(storedEnchant -> {
-                        player.sendMessage(Theme.field(storedEnchant.enchantId().toLowerCase(), String.valueOf(storedEnchant.level())));
+                        player.sendMessage(Theme.field(storedEnchant.id().displayName(), String.valueOf(storedEnchant.level())));
                     });
                 }).build())
                 .argument(enchantment)

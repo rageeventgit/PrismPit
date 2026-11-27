@@ -17,13 +17,13 @@ public class ItemEnchantHandler {
     public Item apply(Item item, ItemEnchant enchant, int level) {
         //For some reason on second enchants, the list becomes immutable, making it impossible to add enchantments.
         List<StoredEnchant> storedEnchants = new ArrayList<>(getAll(item));
-        storedEnchants.add(new StoredEnchant(enchant.name(), level));
+        storedEnchants.add(new StoredEnchant(enchant, level));
         return ItemInfoKeys.withInfo(item, ItemInfoKeys.ENCHANTMENTS, storedEnchants);
     }
 
     public Item remove(Item item, ItemEnchant enchant) {
         List<StoredEnchant> storedEnchants = getAll(item);
-        storedEnchants.removeIf(storedEnchant -> storedEnchant.enchantId().equalsIgnoreCase(enchant.name()));
+        storedEnchants.removeIf(storedEnchant -> storedEnchant.id() == enchant);
         return ItemInfoKeys.withInfo(item, ItemInfoKeys.ENCHANTMENTS, storedEnchants);
     }
 
@@ -44,6 +44,6 @@ public class ItemEnchantHandler {
     }
 
     public Optional<StoredEnchant> get(Item item, ItemEnchant enchant) {
-        return getAll(item).stream().filter(storedEnchant -> storedEnchant.enchantId().equalsIgnoreCase(enchant.name())).findFirst();
+        return getAll(item).stream().filter(storedEnchant -> storedEnchant.id() == enchant).findFirst();
     }
 }

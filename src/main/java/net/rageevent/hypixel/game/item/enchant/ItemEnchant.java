@@ -1,17 +1,23 @@
 package net.rageevent.hypixel.game.item.enchant;
 
 import dev.prism.api.item.ItemType;
+import dev.prism.api.text.Text;
+import dev.prism.api.text.TextColor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
+import net.rageevent.hypixel.game.RewardResolver;
 import net.rageevent.hypixel.game.combat.DamageAddon;
 import net.rageevent.hypixel.game.combat.OperationType;
-import net.rageevent.hypixel.game.item.StoredEnchant;
+import net.rageevent.hypixel.game.item.enchant.enums.ApplicableType;
+import net.rageevent.hypixel.game.item.enchant.enums.EnchantCategory;
+import net.rageevent.hypixel.game.item.enchant.provider.EnchantProvider;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 
 @RequiredArgsConstructor
@@ -37,8 +43,19 @@ public enum ItemEnchant {
             percentage = 7;
         return DamageAddon.normal(OperationType.PERCENT, percentage);
     }))),
+
     COLOSSAL_XP(EnchantCategory.RARE, "Colossal XP", _ -> "Gain <yellow>lots</yellow> of <aqua>XP</aqua> on kill",
-            5, List.of(ApplicableType.SWORD, ApplicableType.BOW), EnchantProvider.of().xp((source, _, enchant) -> enchant.level() * 36));
+            5, List.of(ApplicableType.SWORD, ApplicableType.BOW), EnchantProvider.of().xp((source, _, enchant) ->
+            RewardResolver.Modifier.multiplier(enchant.level() * 56))),
+
+    RANSOM(EnchantCategory.CORRUPTED, "Ransom", _ -> " A<green>25%</green> chance <yellow>half</yellow> <aqua>XP</aqua> from your <red>killer</red> on death.",
+            3, List.of(ApplicableType.PANT), EnchantProvider.of().killed((source, target, data) -> {
+        if (ThreadLocalRandom.current().nextInt(0, 100) < 25)
+            source.sendStylizedMessage("RANSOM", TextColor.DARK_RED,
+                    source.displayName().color(target.rank().color()).appendSpace().append(Text.parse("Took <yellow>half</yellow> of your <aqua>XP</aqua>!")));
+
+    })),
+    ;
 
     private final EnchantCategory category;
     private final String displayName;
@@ -46,15 +63,10 @@ public enum ItemEnchant {
     private final int maxLevel;
     private final List<ApplicableType> applicableTypes;
     private final EnchantProvider provider;
-
     private static final Map<String, ItemEnchant> BY_ID = new HashMap<>();
 
     public static Optional<ItemEnchant> byId(String id) {
         return Optional.ofNullable(BY_ID.get(id));
-    }
-
-    public static Optional<ItemEnchant> fromStored(StoredEnchant enchant) {
-        return byId(enchant.enchantId().toUpperCase());
     }
 
     static {

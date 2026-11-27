@@ -1,4 +1,6 @@
 package net.rageevent.hypixel.game.item;
 
-public record StoredEnchant(String enchantId, int level) {
+import net.rageevent.hypixel.game.item.enchant.ItemEnchant;
+
+public record StoredEnchant(ItemEnchant id, int level) {
 }
