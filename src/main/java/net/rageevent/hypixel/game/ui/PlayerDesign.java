@@ -14,4 +14,5 @@ public class PlayerDesign {
                 .append(userData.levelText())
                 .append(Text.of("]", bracketColor));
     }
+
 }

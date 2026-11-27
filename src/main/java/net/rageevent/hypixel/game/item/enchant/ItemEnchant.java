@@ -48,12 +48,12 @@ public enum ItemEnchant {
             5, List.of(ApplicableType.SWORD, ApplicableType.BOW), EnchantProvider.of().xp((source, _, enchant) ->
             RewardResolver.Modifier.multiplier(enchant.level() * 56))),
 
-    RANSOM(EnchantCategory.CORRUPTED, "Ransom", _ -> " A<green>25%</green> chance <yellow>half</yellow> <aqua>XP</aqua> from your <red>killer</red> on death.",
-            3, List.of(ApplicableType.PANT), EnchantProvider.of().killed((source, target, data) -> {
-        if (ThreadLocalRandom.current().nextInt(0, 100) < 25)
+    RANSOM(EnchantCategory.CORRUPTED, "Ransom", _ -> "A <green>5%</green> to take <yellow>half</yellow> <aqua>XP</aqua> from your <red>killer</red> on death.",
+            3, List.of(ApplicableType.PANT), EnchantProvider.of().killed((source, _, data) -> {
+        if (ThreadLocalRandom.current().nextInt(0, 100) < 6)
             source.sendStylizedMessage("RANSOM", TextColor.DARK_RED,
-                    source.displayName().color(target.rank().color()).appendSpace().append(Text.parse("Took <yellow>half</yellow> of your <aqua>XP</aqua>!")));
-
+                    source.displayName().color(data.target().rank().color()).color(TextColor.GRAY).appendSpace().append(Text.parse("Took <yellow>half</yellow> of your <aqua>XP</aqua>!")));
+        //TODO: Gotta add a way of having both, target & source xp & gold rewards
     })),
     ;
 

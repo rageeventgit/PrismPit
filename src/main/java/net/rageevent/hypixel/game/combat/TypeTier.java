@@ -21,6 +21,7 @@ public enum TypeTier {
     LEATHER((material -> {
         if (material == Items.LEATHER_BOOTS) return 0;
         if (material == Items.LEATHER_CHESTPLATE) return -2;
+        if (material == Items.LEATHER_LEGGINGS) return 1;
         return -1;
     }));
     private final Function<ItemType, Integer> additive;

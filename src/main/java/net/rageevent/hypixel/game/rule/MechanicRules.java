@@ -21,10 +21,10 @@ import net.rageevent.hypixel.game.combat.DamageCalculator;
 import net.rageevent.hypixel.game.events.PlayerDataUpdateEvent;
 import net.rageevent.hypixel.game.instance.GameInstance;
 import net.rageevent.hypixel.game.item.StoredEnchant;
-import net.rageevent.hypixel.game.item.enchant.data.CombatInfo;
-import net.rageevent.hypixel.game.item.enchant.provider.EnchantProvider;
 import net.rageevent.hypixel.game.item.enchant.ItemEnchantHandler;
+import net.rageevent.hypixel.game.item.enchant.data.CombatInfo;
 import net.rageevent.hypixel.game.item.enchant.data.UsableEnchant;
+import net.rageevent.hypixel.game.item.enchant.provider.EnchantProvider;
 import net.rageevent.hypixel.game.mechanic.ExperienceHandler;
 import net.rageevent.hypixel.game.ui.PlayerDesign;
 import net.rageevent.hypixel.game.ui.PlayerGameTag;
@@ -91,11 +91,22 @@ public class MechanicRules {
                     EnchantProvider provider = enchant.id().provider();
                     UsableEnchant usableEnchant = new UsableEnchant(enchant.level(), playerEnchants);
                     if (provider.gold() != null)
-                        goldModifiers.add(provider.gold().apply(finalAttacker, player, usableEnchant));
+                        goldModifiers.add(provider.gold().apply(attacker, player, usableEnchant));
                     if (provider.xp() != null)
-                        xpModifiers.add(provider.xp().apply(finalAttacker, player, usableEnchant));
+                        xpModifiers.add(provider.xp().apply(attacker, player, usableEnchant));
                     if (provider.killed() != null)
-                        provider.killed().apply(finalAttacker, player, new CombatInfo(enchant.level(), playerEnchants, finalAttacker.pitData(), player.pitData()));
+                        provider.killed().apply(attacker, player, new CombatInfo(enchant.level(), playerEnchants, attacker.pitData(), player.pitData()));
+                }
+
+                for (StoredEnchant enchant : playerEnchants) {
+                    EnchantProvider provider = enchant.id().provider();
+                    UsableEnchant usableEnchant = new UsableEnchant(enchant.level(), attackerEnchants);
+                    if (provider.gold() != null)
+                        goldModifiers.add(provider.gold().apply(attacker, player, usableEnchant));
+                    if (provider.xp() != null)
+                        xpModifiers.add(provider.xp().apply(attacker, player, usableEnchant));
+                    if (provider.killed() != null)
+                        provider.killed().apply(attacker, player, new CombatInfo(enchant.level(), playerEnchants, attacker.pitData(), player.pitData()));
                 }
 
                 double givenGold = new BigDecimal(goldResolver.calculate(goldModifiers)).setScale(1, RoundingMode.HALF_UP).doubleValue();
@@ -108,12 +119,13 @@ public class MechanicRules {
                         Text.of("Killed by ", TextColor.GRAY)
                                 .append(PlayerDesign.formattedLevel(attackerData))
                                 .appendSpace()
-                                .append(player.displayName().color(player.rank().color()))
+                                .append(attacker.displayName().color(attacker.rank().color()))
                                 .appendSpace()
                                 .append(Text.of(".", TextColor.GRAY))
                 );
                 attacker.sendStylizedMessage("KILL", TextColor.GREEN,
                         PlayerDesign.formattedLevel(player.pitData())
+                                .appendSpace()
                                 .append(player.displayName().color(player.rank().color()))
                                 .appendSpace()
                                 .append(Text.of("+${givenXp} XP", TextColor.AQUA).appendSpace())
@@ -124,7 +136,7 @@ public class MechanicRules {
                 attacker.sendActionBar(player.displayName().color(player.rank().color())
                         .appendSpace().append(Text.of("KILL!", TextColor.GREEN).bold()));
 
-                player.showTitle(Title.of(Text.EMPTY, Text.of("YOU DIED!", TextColor.RED).bold()));
+                player.showTitle(Title.of(Text.of("YOU DIED",TextColor.RED).bold(), Text.EMPTY));
                 player.playSound(Sound.of(Sounds.BLOCK_ANVIL_PLACE).pitch(2));
                 player.teleport(gameInstance.spawn());
             }

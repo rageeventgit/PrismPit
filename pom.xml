@@ -20,7 +20,7 @@
             <plugin>
                 <groupId>dev.lotus</groupId>
                 <artifactId>lotus-maven-plugin</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
+                <version>1.1.0</version>
                 <executions>
                     <execution>
                         <goals>
@@ -62,6 +62,10 @@
     </build>
 
     <repositories>
+        <repository>
+            <id>github-lotus</id>
+            <url>https://maven.pkg.github.com/rageeventgit/Lotus</url>
+        </repository>
         <repository>
             <id>fern-private</id>
             <url>https://fern.rageevent.net/maven/private</url>
@@ -152,7 +156,7 @@
         <dependency>
             <groupId>dev.lotus</groupId>
             <artifactId>lotus-annotations</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>1.1.0</version>
             <scope>provided</scope>
         </dependency>
 

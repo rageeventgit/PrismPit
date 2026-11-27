@@ -41,7 +41,7 @@ public class ItemDesign {
 
         if (lives != -1 && maxLives != -1 && marker == ItemMarker.NONE)
             itemLore.addFirst(Text.of("Lives: ", TextColor.GRAY)
-                    .append(Text.of(lives + "", (lives < maxLives / 2) ? TextColor.RED : TextColor.GREEN))
+                    .append(Text.of(lives + "", (lives <= maxLives / 2) ? TextColor.RED : TextColor.GREEN))
                     .append(Text.of("/"))
                     .append(Text.of(maxLives + "", TextColor.GREEN))
                     .notItalic()
