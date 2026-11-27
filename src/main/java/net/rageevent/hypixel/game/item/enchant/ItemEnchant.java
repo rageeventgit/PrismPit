@@ -1,4 +1,4 @@
-package net.rageevent.hypixel.game.enchant;
+package net.rageevent.hypixel.game.item.enchant;
 
 import dev.prism.api.item.ItemType;
 import lombok.Getter;
@@ -37,9 +37,8 @@ public enum ItemEnchant {
             percentage = 7;
         return DamageAddon.normal(OperationType.PERCENT, percentage);
     }))),
-    COLOSSAL_XP(EnchantCategory.CORRUPTED, "Colossal XP", _ -> {
-        return "Gain the <yellow>max</yellow> amount of <aqua>XP</aqua> on kill";
-    }, 1, List.of(ApplicableType.SWORD, ApplicableType.BOW), EnchantProvider.of().xp((_, _, _) -> Integer.MAX_VALUE));
+    COLOSSAL_XP(EnchantCategory.RARE, "Colossal XP", _ -> "Gain <yellow>lots</yellow> of <aqua>XP</aqua> on kill",
+            5, List.of(ApplicableType.SWORD, ApplicableType.BOW), EnchantProvider.of().xp((source, _, enchant) -> enchant.level() * 36));
 
     private final EnchantCategory category;
     private final String displayName;

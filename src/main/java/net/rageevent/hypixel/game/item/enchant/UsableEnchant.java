@@ -1,4 +1,4 @@
-package net.rageevent.hypixel.game.enchant;
+package net.rageevent.hypixel.game.item.enchant;
 
 import java.util.List;
 

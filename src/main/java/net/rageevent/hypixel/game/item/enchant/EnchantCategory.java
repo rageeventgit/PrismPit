@@ -1,6 +1,5 @@
-package net.rageevent.hypixel.game.enchant;
+package net.rageevent.hypixel.game.item.enchant;
 
-import dev.prism.api.text.Text;
 import dev.prism.api.text.TextColor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +12,7 @@ public enum EnchantCategory {
 
     NORMAL(TextColor.GRAY),
     RARE(TextColor.LIGHT_PURPLE),
-    CORRUPTED(TextColor.hex(""))
+    CORRUPTED(TextColor.hex("#80475E"))
 
     ;
 

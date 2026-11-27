@@ -35,7 +35,7 @@ public class PlayerGameTag {
 
 
     private String teamName(Player player, UserData data) {
-        return String.format("%02d%02d%03d", data.rank().ordinal(), data.prestige().ordinal(), 999 - data.level()) + player.uuid();
+        return String.format("%02d%03d%04d", data.rank().ordinal(), data.prestige().ordinal(), 999 - data.level()) + player.uuid();
     }
 
     public TeamDisplay format(UserData userData) {

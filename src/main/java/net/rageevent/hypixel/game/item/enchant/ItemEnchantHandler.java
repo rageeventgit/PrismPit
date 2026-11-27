@@ -1,4 +1,4 @@
-package net.rageevent.hypixel.game.enchant;
+package net.rageevent.hypixel.game.item.enchant;
 
 import dev.prism.api.inventory.PlayerInventory;
 import dev.prism.api.item.Item;
@@ -14,9 +14,9 @@ import java.util.Optional;
 public class ItemEnchantHandler {
 
 
-    //TODO: Add an item rebuilder, especially for other data.
     public Item apply(Item item, ItemEnchant enchant, int level) {
-        List<StoredEnchant> storedEnchants = getAll(item);
+        //For some reason on second enchants, the list becomes immutable, making it impossible to add enchantments.
+        List<StoredEnchant> storedEnchants = new ArrayList<>(getAll(item));
         storedEnchants.add(new StoredEnchant(enchant.name(), level));
         return ItemInfoKeys.withInfo(item, ItemInfoKeys.ENCHANTMENTS, storedEnchants);
     }
@@ -36,9 +36,9 @@ public class ItemEnchantHandler {
         Item mainHand = inventory.mainHand();
         Item leggings = inventory.leggings();
 
-        if(!mainHand.isEmpty())
+        if (!mainHand.isEmpty())
             storedEnchants.addAll(getAll(mainHand));
-        if(!leggings.isEmpty())
+        if (!leggings.isEmpty())
             storedEnchants.addAll(getAll(leggings));
         return storedEnchants;
     }

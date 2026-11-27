@@ -5,6 +5,8 @@ import dev.prism.api.combat.CombatSettings;
 import dev.prism.api.command.*;
 import dev.prism.api.entity.Player;
 import dev.prism.api.item.Item;
+import dev.prism.api.nbt.Nbt;
+import dev.prism.api.nbt.NbtCompound;
 import dev.prism.api.plugin.PluginContext;
 import dev.prism.api.sound.Sound;
 import dev.prism.api.sound.Sounds;
@@ -14,11 +16,11 @@ import dev.prism.api.text.Theme;
 import dev.prism.api.world.Instance;
 import dev.prism.api.world.InstanceSpec;
 import net.rageevent.fern.FernClient;
-import net.rageevent.hypixel.game.enchant.ItemEnchant;
-import net.rageevent.hypixel.game.enchant.ItemEnchantHandler;
 import net.rageevent.hypixel.game.events.PlayerDataUpdateEvent;
 import net.rageevent.hypixel.game.item.ItemInfoKeys;
 import net.rageevent.hypixel.game.item.StoredEnchant;
+import net.rageevent.hypixel.game.item.enchant.ItemEnchant;
+import net.rageevent.hypixel.game.item.enchant.ItemEnchantHandler;
 import net.rageevent.hypixel.game.ui.ItemDesign;
 import net.rageevent.hypixel.player.UserData;
 import net.rageevent.hypixel.player.enums.PlayerLevel;
@@ -28,6 +30,7 @@ import net.rageevent.hypixel.util.RomanNumber;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 
 public class StaffCommands {
 
@@ -100,7 +103,7 @@ public class StaffCommands {
                 .argument(level)
                 .argument(target)
                 .executes(executor -> {
-                    if (executor.isPlayer() && executor.player().rank() != PlayerRank.ADMIN)
+                    if (executor.isPlayer() || executor.player().rank() != PlayerRank.ADMIN)
                         executor.fail("You must be admin or higher to use this");
 
                     int upgradedLevel = executor.get(level);
@@ -213,6 +216,10 @@ public class StaffCommands {
         return Command.create("customenchant", "customench").playerOnly()
                 .sub(Command.create("get").playerOnly().executes(executor -> {
                     Player player = executor.player();
+
+                    if (player.rank() != PlayerRank.ADMIN)
+                        throw executor.fail("You must be an admin to do this.");
+
                     Item inHand = player.inventory().mainHand();
 
                     if (inHand.isEmpty())
@@ -234,6 +241,10 @@ public class StaffCommands {
                 .argument(level)
                 .executes(executor -> {
                     Player player = executor.player();
+
+                    if (player.rank() != PlayerRank.ADMIN)
+                        throw executor.fail("You must be an admin to do this.");
+
                     Item inHand = player.inventory().mainHand();
 
                     if (inHand.isEmpty())
@@ -271,8 +282,8 @@ public class StaffCommands {
                     if (executor.has(basicArgument)) {
                         int maxLives = executor.get(basicArgument);
                         Item item = ItemInfoKeys.withInfo(inHand, ItemInfoKeys.MAX_LIVES, maxLives);
-                        player.inventory().setMainHand(ItemInfoKeys.withInfo(item, ItemInfoKeys.CURRENT_LIVES, maxLives));
-                        player.inventory().setMainHand(ItemDesign.redesign(player.inventory().mainHand()));
+                        item = ItemInfoKeys.withInfo(item, ItemInfoKeys.CURRENT_LIVES, maxLives);
+                        player.inventory().setMainHand(ItemDesign.redesign(item));
                         executor.reply("Success");
                         return;
                     }
@@ -287,14 +298,37 @@ public class StaffCommands {
 
                     if (executor.has(basicArgument)) {
                         int currentLives = executor.get(basicArgument);
-                        player.inventory().setMainHand(ItemInfoKeys.withInfo(inHand, ItemInfoKeys.CURRENT_LIVES, currentLives));
-                        player.inventory().setMainHand(ItemDesign.redesign(player.inventory().mainHand()));
+                        player.inventory().setMainHand(ItemDesign.redesign(ItemInfoKeys.withInfo(inHand, ItemInfoKeys.CURRENT_LIVES, currentLives)));
                         executor.reply("Success");
                         return;
                     }
                     executor.reply("<gray>Lives: <green>" + ItemInfoKeys.info(inHand, ItemInfoKeys.CURRENT_LIVES, -1));
                 }).build())
+                .sub(Command.create("tier").argument(basicArgument).executes(executor -> {
+                    Player player = executor.player();
+                    Item inHand = player.inventory().mainHand();
 
+                    if (inHand.isEmpty())
+                        throw executor.fail("You must have an item in your hand.");
+
+                    if (executor.has(basicArgument)) {
+                        int tier = executor.get(basicArgument);
+                        player.inventory().setMainHand(ItemDesign.redesign(ItemInfoKeys.withInfo(inHand, ItemInfoKeys.TIER, tier)));
+                        executor.reply("Success");
+                        return;
+                    }
+                    executor.reply("<gray>Tier: <green>" + ItemInfoKeys.info(inHand, ItemInfoKeys.TIER, 1));
+                }).build())
+                .sub(Command.create("json").executes(executor -> {
+                    Player player = executor.player();
+                    Item inHand = player.inventory().mainHand();
+
+                    if (inHand.isEmpty())
+                        throw executor.fail("You must have an item in your hand.");
+
+                    NbtCompound customInfo = inHand.data().getCompound(ItemInfoKeys.CONTAINER_KEY);
+                    player.sendMessage(customInfo.toPrettyString());
+                }).build())
                 .build();
     }
 
