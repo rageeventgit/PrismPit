@@ -6,6 +6,7 @@ import dev.prism.api.scoreboard.TeamDisplay;
 import dev.prism.api.scoreboard.Teams;
 import dev.prism.api.text.Text;
 import dev.prism.api.text.TextColor;
+import dev.prism.api.world.Instance;
 import lombok.experimental.UtilityClass;
 import net.rageevent.hypixel.player.UserData;
 
@@ -27,7 +28,9 @@ public class PlayerGameTag {
         UserData userData = player.pitData();
         teams.remove(teamName(player, userData));
     }
-
+    public void refresh(Instance instance, Teams teams){
+        instance.players().forEach(teams::show);
+    }
     public Optional<Team> get(Player player, Teams teams) {
         UserData userData = player.pitData();
         return teams.teamOf(teamName(player, userData));

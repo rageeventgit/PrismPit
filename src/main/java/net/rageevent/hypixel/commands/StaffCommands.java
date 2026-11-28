@@ -336,7 +336,6 @@ public class StaffCommands {
 
         return Command.create("rank").argument(target).argument(rankName).executes(executor -> {
                     CommandSender sender = executor.sender();
-
                     if (executor.isPlayer()) {
                         Player player = (Player) sender;
                         if (player.rank() != PlayerRank.ADMIN) {

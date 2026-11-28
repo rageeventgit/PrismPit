@@ -144,6 +144,8 @@ public class MechanicRules {
 
         ExperienceHandler experienceHandler = new ExperienceHandler();
         subscriptions.add(instance.events().on(PlayerDataUpdateEvent.class, event -> {
+            if(!event.instance().name().equalsIgnoreCase(instance.name())) return;
+
             Player player = event.player();
             if (event.type() == PlayerDataUpdateEvent.StatType.BOUNTY) {
                 PlayerGameTag.get(player, teams).ifPresent(team -> team.display(PlayerGameTag.format(player.pitData())));

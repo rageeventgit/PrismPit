@@ -84,6 +84,7 @@ public class GameRules {
                 player.showBoard(null);
                 player.savePitData(userData.inventory(InventoryBytes.serialize(player.inventory())).enderChest(InventoryBytes.serialize(player.enderChest())));
                 PlayerGameTag.removeTeam(player, teams);
+                PlayerGameTag.refresh(instance,teams);
                 player.inventory().clear();
                 return;
             }
@@ -91,9 +92,7 @@ public class GameRules {
             PlayerGameTag.createTeam(player, teams);
             InventoryBytes.load(userData.inventory(), player.inventory());
             InventoryBytes.load(userData.enderChest(), player.enderChest());
-
-            teams.show(player);
-            instance.players().forEach(teams::show);
+            PlayerGameTag.refresh(instance,teams);
             gameBoard.show(player);
         }));
 
